@@ -55,12 +55,10 @@ qx.Class.define("zx.io.remote.proxy.ClassWriter", {
       this.__properties = {};
       this.__methods = {};
 
-      if (clazz.$$properties) {
+      let properties = qx.util.PropertyUtil.getProperties(clazz);
+      if (properties) {
         const getPropertyDefinition = (clazz, propertyName) => {
-          let info = clazz.$$properties[propertyName];
-          if (!info) {
-            return getPropertyDefinition(clazz.superclass, propertyName);
-          }
+          let info = qx.util.PropertyUtil.getProperty(clazz, propertyName).getDefinition();
           info = qx.lang.Object.clone(info);
           if (info["@"] && !qx.lang.Type.isArray(info["@"])) {
             info["@"] = [info["@"]];
@@ -68,7 +66,7 @@ qx.Class.define("zx.io.remote.proxy.ClassWriter", {
           return info;
         };
 
-        for (let propertyName in clazz.$$properties) {
+        for (let propertyName in properties) {
           let info = getPropertyDefinition(clazz, propertyName);
           let allAnnos = info["@"] || [];
 
@@ -103,7 +101,7 @@ qx.Class.define("zx.io.remote.proxy.ClassWriter", {
               } else if (qx.Class.isSubClassOf(info.check, qx.core.Object)) {
                 refType = info.check;
               } else {
-                delete info.check
+                delete info.check;
               }
             }
           }
@@ -141,7 +139,7 @@ qx.Class.define("zx.io.remote.proxy.ClassWriter", {
           let prefix = name.substring(0, pos);
           if (PROPERTY_PREFIXES[prefix]) {
             let propertyName = qx.lang.String.firstLow(name.substring(pos));
-            if (clazz.$$properties && clazz.$$properties[propertyName]) {
+            if (properties && properties[propertyName]) {
               return false;
             }
           }
