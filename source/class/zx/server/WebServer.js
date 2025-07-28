@@ -1121,7 +1121,7 @@ qx.Class.define("zx.server.WebServer", {
      * Outputs a console method if debug is enabled
      */
     debug(msg) {
-      if (this.isDebug()) {
+      if (this.getEnableDebug()) {
         console.log(msg);
       }
     },

@@ -22,7 +22,7 @@
  */
 qx.Mixin.define("zx.utils.mongo.MMongoClient", {
   properties: {
-    debug: {
+    enableDebug: {
       init: false,
       check: "Boolean"
     }
@@ -67,7 +67,7 @@ qx.Mixin.define("zx.utils.mongo.MMongoClient", {
      * @param {*} args
      */
     _debugMongo(clazz, ...args) {
-      if (this.isDebug()) {
+      if (this.getEnableDebug()) {
         this.debug("Mongo: " + clazz + " " + args.map(arg => JSON.stringify(arg)).join(", "));
       }
     },

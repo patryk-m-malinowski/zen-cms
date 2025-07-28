@@ -40,7 +40,7 @@ qx.Class.define("zx.server.email.commands.DeleteCommand", {
       })
     );
 
-    this.setRun(async ({ flags, args }) => {
+    this.setRunFunc(async ({ flags, args }) => {
       await new zx.server.Standalone().start();
       if (args.id) {
         await this.__deleteOne(args.id);

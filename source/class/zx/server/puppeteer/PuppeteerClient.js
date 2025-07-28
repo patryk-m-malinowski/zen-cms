@@ -55,7 +55,7 @@ qx.Class.define("zx.server.puppeteer.PuppeteerClient", {
     },
 
     /** Debug mode */
-    debug: {
+    enableDebug: {
       init: false,
       check: "Boolean"
     },
@@ -161,7 +161,7 @@ qx.Class.define("zx.server.puppeteer.PuppeteerClient", {
         }
       };
 
-      if (this.isDebug()) {
+      if (this.getEnableDebug()) {
         if (this.isAllowHeadfull()) {
           opts.slowMo = 200;
         }
@@ -370,7 +370,7 @@ qx.Class.define("zx.server.puppeteer.PuppeteerClient", {
         this.fireEvent("ping"); //ignore messages with prefix because they are for puppeteer api communications
         return;
       }
-      if (this.isDebug()) {
+      if (this.getEnableDebug()) {
         console.log("PAGE LOG: ", new Date(), ": ", msg.text());
       }
       const TYPES = {
