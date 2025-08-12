@@ -29,7 +29,7 @@ qx.Class.define("zx.server.Session", {
    */
   construct(manager, loadedSessionData, initialUrl) {
     super();
-    this.initAuthenticatedApis(new qx.data.Array());
+
     this.__values = new zx.data.Map();
     this.__manager = manager;
     this.__initialUrl = initialUrl;
@@ -49,9 +49,9 @@ qx.Class.define("zx.server.Session", {
      */
     authenticatedApis: {
       check: "qx.data.Array",
-      deferredInit: true,
+      initFunction: () => new qx.data.Array(),
       event: "changeAuthenticatedApis",
-      nullable: false
+      nullable: false,
     },
 
     /** When the session will expire */

@@ -11,6 +11,7 @@ qx.Class.define("zx.server.work.ui.model.WorkerTracker", {
   construct(pool, trackerJson) {
     super();
     this.__pool = pool;
+
     this.update(trackerJson);
   },
 
