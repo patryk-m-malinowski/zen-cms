@@ -58,7 +58,7 @@ qx.Class.define("zx.io.remote.proxy.ClassWriter", {
       let properties = qx.util.PropertyUtil.getProperties(clazz);
       if (properties) {
         const getPropertyDefinition = (clazz, propertyName) => {
-          let info = qx.util.PropertyUtil.getProperty(clazz, propertyName).getDefinition();
+          let info = qx.util.PropertyUtil.getProperty(clazz, propertyName).getDefinition() ?? {};
           info = qx.lang.Object.clone(info);
           if (info["@"] && !qx.lang.Type.isArray(info["@"])) {
             info["@"] = [info["@"]];

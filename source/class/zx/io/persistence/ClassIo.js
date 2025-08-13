@@ -44,7 +44,7 @@ qx.Class.define("zx.io.persistence.ClassIo", {
     //  and annotations)
     let properties = {};
     qx.Class.getProperties(clazz).forEach(propertyName => {
-      let pdOrig = qx.Class.getPropertyDefinition(clazz, propertyName);
+      let pdOrig = qx.Class.getPropertyDefinition(clazz, propertyName) ?? {};
       let propertyDef = {
         propertyName
       };
