@@ -293,7 +293,7 @@ qx.Class.define("zx.ui.form.SearchField", {
           return comp;
 
         case "btnSearch":
-          var btn = new qx.ui.form.Button("Search", "@FontAwesomeSolid/search/16").set({ appearance: "inlinebutton", show: "icon" });
+          var btn = new qx.ui.form.Button("Search", "@FontAwesomeSolid/search/16").set({ appearance: "inlinebutton", showFeatures: "icon" });
           btn.addListener("execute", this.__doSearch, this);
           return btn;
       }

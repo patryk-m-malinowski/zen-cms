@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 qx.Class.define("zx.app.simplepages.SimplePiecesEditor", {
   extend: zx.ui.editor.FormEditor,
@@ -76,7 +76,7 @@ qx.Class.define("zx.app.simplepages.SimplePiecesEditor", {
         case "btnDelete":
           var btn = new qx.ui.toolbar.Button("Delete", "@FontAwesome/times-circle/16").set({
             enabled: false,
-            show: "icon"
+            showFeatures: "icon"
           });
 
           btnDelete.addListener("execute", () => {});

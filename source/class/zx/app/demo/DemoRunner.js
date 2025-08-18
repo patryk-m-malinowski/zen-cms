@@ -350,7 +350,7 @@ qx.Class.define("zx.app.demo.DemoRunner", {
 
         case "btnAccount":
           return new qx.ui.form.MenuButton("My Account", "@FontAwesomeSolid/user-circle/32").set({
-            show: "icon"
+            showFeatures: "icon"
           });
 
         case "mnuLoggedIn":
