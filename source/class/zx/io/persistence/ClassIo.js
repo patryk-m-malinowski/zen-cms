@@ -28,7 +28,8 @@ qx.Class.define("zx.io.persistence.ClassIo", {
 
   /**
    * Constructor
-   * @param clazz {qx.Class} the class that this instance will be able to persist
+   * @param {zx.io.persistence.ClassIos} classIos
+   * @param {qx.Class} clazz the class that this instance will be able to persist
    */
   construct(classIos, clazz) {
     super();
@@ -40,11 +41,12 @@ qx.Class.define("zx.io.persistence.ClassIo", {
     }
 
     // Get a list of all properties, all the way up the class heirarchy, and their property
-    //  definition; along the way we merge property definitions (which means merging init values
-    //  and annotations)
+    // definition; along the way we merge property definitions (which means merging init values
+    // and annotations)
     let properties = {};
     qx.Class.getProperties(clazz).forEach(propertyName => {
       let pdOrig = qx.Class.getPropertyDefinition(clazz, propertyName) ?? {};
+      let property = qx.Class.getByProperty(clazz, propertyName);
       let propertyDef = {
         propertyName
       };
@@ -77,8 +79,10 @@ qx.Class.define("zx.io.persistence.ClassIo", {
           }
         }
       } else {
-        if (propertyDef.check && typeof propertyDef.check == "string") {
-          let cls = qx.Class.getByName(propertyDef.check);
+        let check = property.getCheck();
+        if (check instanceof qx.core.check.DynamicTypeCheck && check.getTypename()) {
+          let typename = check.getTypename();
+          let cls = qx.Class.getByName(typename);
           if (cls) {
             propertyDef.check = cls;
           }
