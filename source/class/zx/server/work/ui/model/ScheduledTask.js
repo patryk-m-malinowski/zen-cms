@@ -8,7 +8,6 @@ qx.Class.define("zx.server.work.ui.model.ScheduledTask", {
   construct(api, json) {
     super();
     this.__api = api;
-    this.initWorkResults(new qx.data.Array());
     this.setExplicitUuid(json.uuid);
     this.__update(json);
   },
@@ -38,7 +37,7 @@ qx.Class.define("zx.server.work.ui.model.ScheduledTask", {
     workResults: {
       check: "qx.data.Array",
       event: "changeWorkResults",
-      deferredInit: true
+      init: () => new qx.data.Array()
     },
     dateStarted: {
       check: "Date",
