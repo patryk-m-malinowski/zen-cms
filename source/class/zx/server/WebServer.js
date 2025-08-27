@@ -1061,7 +1061,8 @@ qx.Class.define("zx.server.WebServer", {
         let dbUrl = (url = "pages" + url.replace(".json", ""));
         let object = await this.getObjectByUrl(zx.cms.content.Page, dbUrl);
         if (!object) {
-          throw new zx.utils.Http.HttpError(404, `Cannot find ${url}`);
+          reply.code(404);
+          return reply.send(`Cannot find ${url}`);
         }
 
         let rendering = new zx.cms.render.FastifyRendering(req, reply);
@@ -1075,7 +1076,8 @@ qx.Class.define("zx.server.WebServer", {
         let dbUrl = (url = "pages" + url.substring(0, url.length - 4));
         let object = await this.getObjectByUrl(zx.cms.content.CsvDownload, dbUrl);
         if (!object) {
-          throw new zx.utils.Http.HttpError(404, `Cannot find ${url}`);
+          reply.code(404);
+          return reply.send(`Cannot find ${url}`);
         }
 
         try {
@@ -1087,7 +1089,8 @@ qx.Class.define("zx.server.WebServer", {
       }
 
       // Oops
-      throw new zx.utils.Http.HttpError(404, `Cannot find ${url}`);
+      reply.code(404);
+      return reply.send(`Cannot find ${url}`);
     },
 
     /**
