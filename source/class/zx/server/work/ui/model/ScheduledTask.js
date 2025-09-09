@@ -37,7 +37,7 @@ qx.Class.define("zx.server.work.ui.model.ScheduledTask", {
     workResults: {
       check: "qx.data.Array",
       event: "changeWorkResults",
-      init: () => new qx.data.Array()
+      initFunction: () => new qx.data.Array()
     },
     dateStarted: {
       check: "Date",
