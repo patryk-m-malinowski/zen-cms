@@ -74,7 +74,7 @@ qx.Class.define("zx.io.api.transport.http.FastifyServerTransport", {
         if (response.getStatusCode() === 200) {
           response.setStatusCode(500);
         }
-        response.setError(e.toString());
+        response.setErrorMessage(e.toString());
       }
 
       res.status(response.getStatusCode());

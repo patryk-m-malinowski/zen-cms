@@ -60,7 +60,7 @@ qx.Class.define("zx.io.api.server.Response", {
      * General error.
      * E.g. proxy exception, etc.
      */
-    error: {
+    errorMessage: {
       init: null,
       nullable: true,
       check: "String"
@@ -114,7 +114,7 @@ qx.Class.define("zx.io.api.server.Response", {
       } else {
         return {
           data: this.__data,
-          error: this.getError()
+          error: this.getErrorMessage()
         };
       }
     }

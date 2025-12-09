@@ -83,7 +83,7 @@ qx.Class.define("zx.io.api.transport.http.ExpressServerTransport", {
         if (response.getStatusCode() === 200) {
           response.setStatusCode(500);
         }
-        response.setError(e.toString());
+        response.setErrorMessage(e.toString());
       }
       res.status(response.getStatusCode());
       //If we decide to encrypt responses, we would put it here
