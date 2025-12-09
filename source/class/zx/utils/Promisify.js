@@ -239,11 +239,13 @@ qx.Class.define("zx.utils.Promisify", {
      * they know they have to track it; this code will only treat the value as a promise
      * if really necessary, preferring traditional synchronous code
      *
-     * @param value {Object} the value to check
-     * @param cb {Function} function to call, passed the resolved value
+     * @param {Object} value the value to check
+     * @param {Function} cb to call, passed the resolved value, like promise.then
+     * @param {Function?} cberr function to call on error, like promise.catch
+     * @param {Function?} cbfinally function to call in finally, like promise.finally
      * @returns whatever `cb` returns, or a promise if `value` is a promise
      */
-    resolveNow(value, cb, cberr) {
+    resolveNow(value, cb, cberr, cbfinally) {
       if (!cb) {
         cb = value => value;
       }
@@ -252,15 +254,22 @@ qx.Class.define("zx.utils.Promisify", {
         if (cberr) {
           p = p.catch(cberr);
         }
+        if (cbfinally) {
+          p = p.finally(cbfinally);
+        }
         return p;
-      } else if (cberr) {
+      } else {
         try {
           return cb(value);
         } catch (ex) {
-          cberr(ex);
+          if (cberr) {
+            return cberr(ex);
+          } else {
+            throw ex;
+          }
+        } finally {
+          cbfinally?.();
         }
-      } else {
-        return cb(value);
       }
     },
 
