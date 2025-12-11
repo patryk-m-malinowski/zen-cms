@@ -362,7 +362,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
       if (status === "dead") {
         pool.destroyResource(workerTracker);
       } else if (status === "stopped") {
-        workerTracker.reuse();
+        queueMicrotask(() => workerTracker.reuse());
         pool.release(workerTracker);
       }
       if (workResult) {
