@@ -95,6 +95,14 @@ qx.Class.define("zx.utils.Timeout", {
   },
 
   members: {
+    /**
+     * Promise which resolves when the timeout callback finishes running.
+     * Only set when this object is running this callback.
+     *
+     * @type {Promise<void>|null}
+     */
+    __promiseCallback: null,
+
     /** @type{var} the `setTimeout` ID */
     __timerId: null,
 
@@ -167,20 +175,40 @@ qx.Class.define("zx.utils.Timeout", {
      */
     async trigger() {
       this.killTimer();
+      while (this.__promiseCallback) {
+        await this.__promiseCallback;
+      }
+      if (qx.core.Environment.get("qx.debug")) {
+        if (this.__promiseCallback) {
+          throw new Error("Overlapping timer callback execution detected!");
+        }
+      }
       if (this.isEnabled()) {
         try {
-          await this.fire();
+          await (this.__promiseCallback = this.fire());
         } catch (ex) {
           if (this.getExceptionCallback()) {
             this.getExceptionCallback().call(this, ex);
           } else {
             throw ex;
           }
+        } finally {
+          this.__promiseCallback = null;
         }
         if (this.isEnabled() && this.isRecurring() && !this.isDisposed()) {
           this.startTimer();
         }
       }
+    },
+
+    /**
+     * Returns a promise that resolves when the timeout callback has finished processing,
+     * or null if the callback is not running.__accessLogStream
+     * Useful for when you want to turn off the timeout but wait for the current iteration to finish if there is one.
+     * @returns {Promise<void> | null}
+     */
+    async waitUntilFinished() {
+      return this.__promiseCallback;
     },
 
     /**
