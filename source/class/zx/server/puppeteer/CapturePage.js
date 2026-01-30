@@ -48,6 +48,7 @@ qx.Class.define("zx.server.puppeteer.CapturePage", {
 
       worker.appendWorkLog("Waiting for page to complete...");
       await promiseComplete;
+      await pageApi.complete();
       worker.appendWorkLog("Page completed");
       await ctlr.close();
       worker.appendWorkLog("Controller closed");

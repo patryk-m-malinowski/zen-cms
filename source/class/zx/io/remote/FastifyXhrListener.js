@@ -66,7 +66,7 @@ qx.Class.define("zx.io.remote.FastifyXhrListener", {
      * @return zx.io.remote.NetworkEndpoint
      */
     _getOrCreateEndpoint(req) {
-      let sessionValues = req.session.get(this.classname, {});
+      let sessionValues = req.getSession().get(this.classname, {});
       if (!sessionValues.endpoints) {
         sessionValues.endpoints = {};
       }

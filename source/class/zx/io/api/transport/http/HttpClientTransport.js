@@ -82,7 +82,7 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
 
       let responseText = await httpResponse.text();
       let data = zx.utils.Json.parseJson(responseText);
-      if (data.error) {
+      if (data?.error) {
         response.setStatusCode(httpResponse.status);
         throw new Error("gateway error: " + data.error);
       }

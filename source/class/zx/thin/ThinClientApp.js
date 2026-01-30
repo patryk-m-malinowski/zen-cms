@@ -270,6 +270,13 @@ qx.Class.define("zx.thin.ThinClientApp", {
       return this.__netController;
     },
 
+    closeNetController() {
+      if (this.__netController) {
+        this.__netController.close();
+        this.__netController = null;
+      }
+    },
+
     /**
      * Gets a named API from the server
      *

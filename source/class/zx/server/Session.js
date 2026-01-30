@@ -35,7 +35,6 @@ qx.Class.define("zx.server.Session", {
     if (loadedSessionData) {
       this.importSession(loadedSessionData);
     }
-    this.touch();
     if (!loadedSessionData?.sessionId) {
       this.regenerate();
     }
@@ -52,9 +51,11 @@ qx.Class.define("zx.server.Session", {
       event: "changeAuthenticatedApis",
       nullable: false
     },
+
     /** When the session will expire */
     expires: {
       init: null,
+      nullable: true,
       check: "Date",
       event: "changeExpires"
     },
@@ -216,10 +217,18 @@ qx.Class.define("zx.server.Session", {
       this.__modified = false;
     },
 
+    /**
+     * Tracks whether the session has been modified and needs to be persisted to the database
+     *
+     * @returns {Boolean}
+     */
     isModified() {
       return this.__modified;
     },
 
+    /**
+     * Marks the session as no longer modified
+     */
     clearModified() {
       this.__modified = false;
     },

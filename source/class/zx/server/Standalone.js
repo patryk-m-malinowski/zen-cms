@@ -87,8 +87,10 @@ qx.Class.define("zx.server.Standalone", {
      */
     async start() {
       let config = zx.server.Config.getInstance();
+      if (qx.core.Environment.get("qx.debug")) {
+        zx.test.TestRunner.runAll(zx.test.util.LruCache);
+      }
       this._config = await zx.server.Config.getConfig();
-      debugger;
       await this._enableHeapDumps();
       if (this._config.smtpServer) {
         await zx.server.email.EmailJS.initialise();

@@ -56,6 +56,15 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
     "zx.io.remote.NetworkEndpoint.server": undefined
   },
 
+  properties: {
+    /** Whether to signal to the server that the connection will be short lived (ie usually a thin client); this is a
+     * request not a requirement and simply allows the server to optimise its caching strategy for sessions */
+    fastExpire: {
+      init: false,
+      check: "Boolean"
+    }
+  },
+
   members: {
     /** @type{Boolean} whether this endpoint is able to push packets to the other side */
     _supportsPushPackets: true,
@@ -110,6 +119,7 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
         type: "open",
         uuid: this.getUuid(),
         hash: this.toHashCode(),
+        fastExpire: this.getFastExpire(),
         promise
       });
 
@@ -501,6 +511,12 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
       return response;
     },
 
+    /**
+     * Serialises a value to send to the other side as JSON
+     *
+     * @param {*} value
+     * @returns {Object}
+     */
     async _serializeReturnValue(value) {
       const bson = require("bson");
       const controller = this.getController();
@@ -582,6 +598,12 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
       return result;
     },
 
+    /**
+     * Deserializes a value received from the other side
+     *
+     * @param {Object} value
+     * @returns {*}
+     */
     _deserializeReturnValue(value) {
       let promises = [];
       const deserializeValue = value => {
@@ -621,6 +643,12 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
       return result;
     },
 
+    /**
+     * Called to received the queued packets
+     *
+     * @param {*} context
+     * @returns
+     */
     async _receivePacketsImpl(context) {
       let { packets } = context;
 
@@ -801,6 +829,8 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
         } else if (packet.type == "close") {
           this.__open = false;
           this.fireEvent("close");
+
+          // Open
         } else if (packet.type == "open") {
           if (qx.core.Environment.get("qx.debug")) {
             if (packet.uuid != this.getUuid()) {
@@ -867,6 +897,13 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
       return responses;
     },
 
+    /**
+     * Called when a file is being uploaded
+     *
+     * @param {*} req
+     * @param {*} reply
+     * @returns
+     */
     async _uploadFile(req, reply) {
       if (qx.core.Environment.get("zx.io.remote.NetworkEndpoint.server")) {
         let controller = this.getController();

@@ -152,7 +152,7 @@ qx.Class.define("zx.server.auth.User", {
      * @param {FastifyRequest} req
      */
     login(req) {
-      req.session.set(this.classname, {
+      req.getSession(true).set(this.classname, {
         userUuid: this.toUuid()
       });
     },

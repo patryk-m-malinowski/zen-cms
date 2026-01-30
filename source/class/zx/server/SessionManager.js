@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 const cookieSignature = require("cookie-signature");
 
@@ -34,7 +34,8 @@ qx.Class.define("zx.server.SessionManager", {
     this.__uri = uri;
     this.__databaseName = databaseName;
     this.__collectionName = collectionName;
-    this.__sessionCache = {};
+    this.__sessionCache = new zx.utils.LruCache(500);
+    this.__sessionJsonCache = {};
   },
 
   properties: {
@@ -86,8 +87,17 @@ qx.Class.define("zx.server.SessionManager", {
     /** @type{MongoClient.Collection} the Mongo collection */
     __collection: null,
 
-    /** @type{Map<String,zx.server.Session} cache of sessions, indexed by sessionId */
+    /** @type{zx.utils.LruCache} cache of sessions, indexed by sessionId */
     __sessionCache: null,
+
+    /**
+     * @typedef {Object} SessionJson
+     * @property {String} sessionId
+     * @property {Date} loaded
+     * @property {Object} values
+     *
+     * @type{Map<String,SessionJson} cache of session JSON, indexed by sessionId */
+    __sessionJsonCache: null,
 
     /**
      * Opens the database connection
@@ -103,6 +113,7 @@ qx.Class.define("zx.server.SessionManager", {
       this.__collection = this.__db.collection(this.__collectionName);
 
       await this.deleteExpiredSessions();
+      this.__startDeleteExpiredSessionsTimer();
     },
 
     /**
@@ -125,9 +136,42 @@ qx.Class.define("zx.server.SessionManager", {
      */
     newSession(request) {
       this.clearSession(request);
-      request.session = new zx.server.Session(this, null);
-      request.session.addUse();
-      return request.session;
+      return this.getSession(request, true);
+    },
+
+    /**
+     * Gets the session, optionally creating it if it does not exist
+     *
+     * @param {Boolean} createIfMissing if true will create the session if it does not exist, otherwise returns null
+     * @returns {zx.server.Session?} the session or null if not found
+     */
+    getSession(request, createIfMissing = false) {
+      let sessionId = request.__sessionId || null;
+      if (!sessionId) {
+        if (!createIfMissing) {
+          return null;
+        }
+        let session = new zx.server.Session(this, null);
+        this.__sessionCache.put(session.getSessionId(), session);
+        request.__sessionId = session.getSessionId();
+        return session;
+      }
+
+      let session = this.__sessionCache.get(sessionId) || null;
+      if (!session) {
+        let cachedData = this.__sessionJsonCache[sessionId];
+        if (cachedData) {
+          delete this.__sessionJsonCache[sessionId];
+          session = new zx.server.Session(this, cachedData.values);
+          this.__sessionCache.put(sessionId, session);
+        } else {
+          session = new zx.server.Session(this, null);
+          this.__sessionCache.put(session.getSessionId(), session);
+          request.__sessionId = session.getSessionId();
+        }
+      }
+
+      return session;
     },
 
     /**
@@ -140,7 +184,7 @@ qx.Class.define("zx.server.SessionManager", {
       if (request.session) {
         let sessionId = request.session.getSessionId();
         request.session = null;
-        delete this.__sessionCache[sessionId];
+        this.__sessionCache.remove(sessionId);
         await this.__collection.deleteOne({ sessionId });
       }
     },
@@ -156,10 +200,40 @@ qx.Class.define("zx.server.SessionManager", {
         request.session.decUse();
         if (!request.session.isInUse()) {
           this.__saveSession(request);
-          delete this.__sessionCache[sessionId];
+          this.__sessionCache.remove(sessionId);
         }
         request.session = null;
       }
+    },
+
+    /**
+     * Starts the timer to delete expired sessions
+     */
+    __startDeleteExpiredSessionsTimer() {
+      this.__deleteExpiredSessionsTimer = setTimeout(() => this.__onExpiredSessionsTimer(), 30 * 1000);
+    },
+
+    /**
+     * Kills the timer to delete expired sessions
+     */
+    __killDeleteExpiredSessionsTimer() {
+      if (this.__deleteExpiredSessionsTimer) {
+        clearTimeout(this.__deleteExpiredSessionsTimer);
+        this.__deleteExpiredSessionsTimer = null;
+      }
+    },
+
+    /**
+     * Timer handler to delete expired sessions
+     */
+    async __onExpiredSessionsTimer() {
+      this.__deleteExpiredSessionsTimer = null;
+      await this.deleteExpiredSessions();
+      if (!this.__mongo) {
+        // no mongo means we've been shut down
+        return;
+      }
+      this.__startDeleteExpiredSessionsTimer();
     },
 
     /**
@@ -167,6 +241,19 @@ qx.Class.define("zx.server.SessionManager", {
      */
     async deleteExpiredSessions() {
       await this.__collection.deleteMany({ expires: { $lt: new Date() } });
+      for (let sessionId of this.__sessionCache.keys()) {
+        let session = this.__sessionCache.get(sessionId);
+        if (session.hasExpired()) {
+          this.__sessionCache.remove(sessionId);
+        }
+      }
+      let oldestDateMs = Date.now() - 1 * 60 * 1000;
+      for (let sessionId in this.__sessionJsonCache) {
+        let sessionJson = this.__sessionJsonCache[sessionId];
+        if (sessionJson.loaded.getTime() < oldestDateMs) {
+          delete this.__sessionJsonCache[sessionId];
+        }
+      }
     },
 
     /**
@@ -176,8 +263,8 @@ qx.Class.define("zx.server.SessionManager", {
      * @param {import("fastify").FastifyReply} reply
      */
     async _onRequest(request, reply) {
+      // Find the session ID from the cookie if there is one
       let cookieOptions = this.getCookieOptions();
-
       let url = request.raw.url;
       if (url.indexOf(cookieOptions.path || "/") !== 0) {
         return;
@@ -185,25 +272,20 @@ qx.Class.define("zx.server.SessionManager", {
 
       let encryptedSessionId = request.cookies[this.getCookieName()];
       let sessionId = encryptedSessionId ? cookieSignature.unsign(encryptedSessionId, this.getSecret()) : null;
-      if (!sessionId) {
-        this.newSession(request);
-        return;
-      }
+      request.__sessionId = sessionId;
 
-      request.session = this.__sessionCache[sessionId] || null;
-      if (!request.session) {
+      // If we have a sessionId, and we do not actually have a session yet, then load the session JSON
+      //  while we can.  Cache this JSON, because we could get lots of requests, none of which cause
+      //  us to create a `zx.server.Session` instance
+      if (sessionId && !this.__sessionCache.get(sessionId) && !this.__sessionJsonCache[sessionId]) {
         let json = await this.__collection.findOne({ sessionId });
-        request.session = this.__sessionCache[sessionId] || null;
-        if (!request.session) {
-          request.session = this.__sessionCache[sessionId] = new zx.server.Session(this, json);
+        if (json) {
+          this.__sessionJsonCache[sessionId] = {
+            sessionId: json.sessionId,
+            loaded: new Date(),
+            values: json
+          };
         }
-      }
-
-      request.session.addUse();
-
-      if (request.session.hasExpired()) {
-        await this.disposeSession(request);
-        this.newSession(request);
       }
     },
 
@@ -215,7 +297,8 @@ qx.Class.define("zx.server.SessionManager", {
      * @param {var} payload
      */
     async _onSend(request, reply, payload) {
-      let session = request.session;
+      let sessionId = request.__sessionId || null;
+      let session = sessionId ? this.__sessionCache.get(sessionId) : null;
       if (!session || !session.getSessionId() || !this.__shouldSaveSession(request)) {
         return payload;
       }
@@ -233,14 +316,16 @@ qx.Class.define("zx.server.SessionManager", {
      * @param {import("fastify").FastifyReply} reply
      */
     async _onResponse(request, reply) {
-      const session = request.session;
+      let session = request.session;
       if (!session) {
         return;
       }
-      request.session.decUse();
-      if (!request.session.isInUse()) {
+      session.decUse();
+      if (!session.isInUse()) {
         await this.__saveSession(request);
-        delete this.__sessionCache[request.session.getSessionId()];
+        if (session.hasExpired()) {
+          await this.disposeSession(request);
+        }
       }
     },
 
@@ -275,6 +360,7 @@ qx.Class.define("zx.server.SessionManager", {
         let session = request.session;
         let json = session.exportSession();
         let sessionId = session.getSessionId();
+        session.clearModified();
         this.__collection.replaceOne({ sessionId: sessionId }, json, { upsert: true });
       }
     },
@@ -319,7 +405,16 @@ qx.Class.define("zx.server.SessionManager", {
      * @param {Fastify} fastify
      */
     registerWithFastify(fastify) {
-      fastify.decorateRequest("session", null);
+      fastify.decorateRequest("__sessionId", null);
+      let sessionManager = this;
+      fastify.decorateRequest("session", {
+        getter: function () {
+          return sessionManager.getSession(this, false);
+        }
+      });
+      fastify.decorateRequest("getSession", function () {
+        return sessionManager.getSession(this, true);
+      });
       fastify.addHook("onRequest", async (request, reply) => await this._onRequest(request, reply));
       fastify.addHook("onSend", async (request, reply, payload) => await this._onSend(request, reply, payload));
       fastify.addHook("onResponse", async (request, reply) => await this._onResponse(request, reply));
