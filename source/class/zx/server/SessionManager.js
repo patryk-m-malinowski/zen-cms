@@ -146,15 +146,19 @@ qx.Class.define("zx.server.SessionManager", {
      * @returns {zx.server.Session?} the session or null if not found
      */
     getSession(request, createIfMissing = false) {
+      const createSession = values => {
+        let session = new zx.server.Session(this, values, request.url);
+        this.__sessionCache.put(session.getSessionId(), session);
+        request.__sessionId = session.getSessionId();
+        return session;
+      };
+
       let sessionId = request.__sessionId || null;
       if (!sessionId) {
         if (!createIfMissing) {
           return null;
         }
-        let session = new zx.server.Session(this, null);
-        this.__sessionCache.put(session.getSessionId(), session);
-        request.__sessionId = session.getSessionId();
-        return session;
+        return createSession();
       }
 
       let session = this.__sessionCache.get(sessionId) || null;
@@ -162,12 +166,9 @@ qx.Class.define("zx.server.SessionManager", {
         let cachedData = this.__sessionJsonCache[sessionId];
         if (cachedData) {
           delete this.__sessionJsonCache[sessionId];
-          session = new zx.server.Session(this, cachedData.values);
-          this.__sessionCache.put(sessionId, session);
-        } else {
-          session = new zx.server.Session(this, null);
-          this.__sessionCache.put(session.getSessionId(), session);
-          request.__sessionId = session.getSessionId();
+          session = createSession(cachedData.values);
+        } else if (createIfMissing) {
+          session = createSession();
         }
       }
 

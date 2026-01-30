@@ -56,7 +56,7 @@ qx.Class.define("zx.io.api.transport.http.HttpClientTransport", {
       let responseText = await httpResponse.text();
 
       let data = zx.utils.Json.parseJson(responseText);
-      if (data.error) {
+      if (data?.error) {
         throw new Error(data.error);
       }
       //If we decide to encrypt responses, we would put the decryption here

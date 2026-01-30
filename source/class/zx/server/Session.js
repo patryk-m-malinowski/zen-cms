@@ -27,17 +27,19 @@ qx.Class.define("zx.server.Session", {
    * @param {zx.server.SessionManager} manager
    * @param {var?} loadedSessionData
    */
-  construct(manager, loadedSessionData) {
+  construct(manager, loadedSessionData, initialUrl) {
     super();
     this.initAuthenticatedApis(new qx.data.Array());
     this.__values = new zx.data.Map();
     this.__manager = manager;
+    this.__initialUrl = initialUrl;
     if (loadedSessionData) {
       this.importSession(loadedSessionData);
     }
     if (!loadedSessionData?.sessionId) {
       this.regenerate();
     }
+    this.set("__initialUrl", initialUrl);
   },
 
   properties: {
