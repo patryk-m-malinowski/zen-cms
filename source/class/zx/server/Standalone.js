@@ -86,7 +86,6 @@ qx.Class.define("zx.server.Standalone", {
      * Called to start the server
      */
     async start() {
-      let config = zx.server.Config.getInstance();
       if (qx.core.Environment.get("qx.debug")) {
         zx.test.TestRunner.runAll(zx.test.util.LruCache);
       }

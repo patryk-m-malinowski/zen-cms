@@ -17,6 +17,9 @@
 
 /**
  * @asset(zx/io/remote/proxy/ProxyClass.tmpl)
+ *
+ * @typedef {{code:string,anno:Object}} AnnoExtra
+ * @typedef {qx.tool.compiler.meta.StdClassParser.PropertyMeta & {annosExtra: Object.<string,AnnoExtra>}} PropertyMetaExtra
  */
 qx.Class.define("zx.io.remote.proxy.ClassWriter", {
   extend: qx.core.Object,
@@ -25,133 +28,73 @@ qx.Class.define("zx.io.remote.proxy.ClassWriter", {
    * Constructor
    *
    * @param {zx.io.remote.proxy.ClassesWriter} classesWriter
-   * @param {Class} clazz
+   * @param {string} classname
+   * @param {qx.tool.compiler.meta.MetaDatabase} metaDb
    */
-  construct(classesWriter, clazz) {
+  construct(classesWriter, classname, metaDb) {
     super();
+    this.__metaDb = metaDb;
     this.__classesWriter = classesWriter;
-    this.__clazz = clazz;
-    this._initalise();
+    this.__classname = classname;
+    this._initalize();
   },
 
   members: {
-    /** @type{zx.io.remote.proxy.ClassesWriter} containing instance */
+    /**
+     * @type {qx.tool.compiler.meta.MetaDatabase}
+     */
+    __metaDb: null,
+
+    /** @type {zx.io.remote.proxy.ClassesWriter} containing instance */
     __classesWriter: null,
 
-    /** @type{Class} the class to create the proxy for */
-    __clazz: null,
+    /** @type {string} the class to create the proxy for */
+    __classname: null,
 
-    /** @type{Map} properties */
+    /** @type {Object.<string,PropertyMetaExtra>} properties */
     __properties: null,
 
-    /** @type{Map} methods */
+    /** @type {Object.<string,MethodMeta>} methods */
     __methods: null,
+
+    /**
+     * @typedef {Object} MethodMeta
+     * @property {{code:string, anno: qx.core.Object}[]=} annosExtra
+     */
 
     /**
      * Called to read the class and initialise
      */
-    _initalise() {
-      let clazz = this.__clazz;
+    _initalize() {
+      const AnnoUtil = qx.tool.compiler.meta.AnnoUtil;
+      let classname = this.__classname;
+      let classMeta = this.__metaDb.getMetaData(classname);
       this.__properties = {};
       this.__methods = {};
 
-      let properties = qx.util.PropertyUtil.getProperties(clazz);
-      if (properties) {
-        const getPropertyDefinition = (clazz, propertyName) => {
-          let info = qx.util.PropertyUtil.getProperty(clazz, propertyName).getDefinition() ?? {};
-          info = qx.lang.Object.clone(info);
-          if (info["@"] && !qx.lang.Type.isArray(info["@"])) {
-            info["@"] = [info["@"]];
-          }
-          return info;
-        };
-
-        for (let propertyName in properties) {
-          let info = getPropertyDefinition(clazz, propertyName);
-          let allAnnos = info["@"] || [];
-
-          let annos = allAnnos.filter(anno => qx.Class.isSubClassOf(anno.constructor, zx.io.persistence.anno.Array));
-          let arrayType = null;
-          if (annos.length) {
-            arrayType = info.arrayType = annos[annos.length - 1].getArrayType();
-          }
-
-          annos = allAnnos.filter(anno => qx.Class.isSubClassOf(anno.constructor, zx.io.persistence.anno.Map));
-          let keyType = null;
-          if (annos.length) {
-            let anno = annos[annos.length - 1];
-            arrayType = info.arrayType = anno.getArrayType();
-            keyType = info.keyType = anno.getKeyType();
-          }
-
-          annos = allAnnos.filter(anno => qx.Class.isSubClassOf(anno.constructor, zx.io.remote.anno.Property));
-          if (!annos.length) {
-            continue;
-          }
-
-          let refType = null;
-          if (info.check) {
-            if (info.check === "Array") {
-              refType = arrayType;
-            } else if (typeof info.check != "string") {
-              if (qx.Class.isSubClassOf(info.check, qx.data.Array)) {
-                refType = arrayType;
-              } else if (qx.Class.isSubClassOf(info.check, qx.data.Array)) {
-                refType = arrayType;
-              } else if (qx.Class.isSubClassOf(info.check, qx.core.Object)) {
-                refType = info.check;
-              } else {
-                delete info.check;
-              }
-            }
-          }
-
-          info.$remote = { annos, refType, keyType };
-          if (info.transform && !annos[annos.length - 1].isExcludeTransform()) {
-            info.$remote.transform = info.transform;
-            this.__methods[info.transform] = {
-              code: clazz.prototype[info.transform].toString()
-            };
-          }
-          this.__properties[propertyName] = info;
+      for (let [propertyName, propertyMeta] of Object.entries(classMeta.properties || {})) {
+        let annosExtra = [];
+        for (let [name, code] of Object.entries(propertyMeta.annotation || {})) {
+          let anno = AnnoUtil.evalAnno(code);
+          if (!anno) continue;
+          if (!qx.Class.isSubClassOf(anno.constructor, zx.io.remote.anno.Property)) continue;
+          annosExtra.push({ code, anno });
         }
+        if (!annosExtra.length) continue;
+        this.__properties[propertyName] = { ...propertyMeta, annosExtra };
       }
 
-      const UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      const PROPERTY_PREFIXES = {
-        get: true,
-        set: true,
-        init: true,
-        reset: true
-      };
+      let memberNames = Object.keys(classMeta.members || {});
 
-      let names = Object.keys(clazz.prototype).filter(v => typeof clazz.prototype[v] == "function" && v != "constructor" && v != "destruct");
-      names.forEach(name => {
-        // Exclude any methods which are property accessors
-        let pos = -1;
-        for (let i = 0; i < name.length; i++) {
-          if (UPPER.indexOf(name[i]) > -1) {
-            pos = i;
-            break;
-          }
-        }
-        if (pos > -1) {
-          let prefix = name.substring(0, pos);
-          if (PROPERTY_PREFIXES[prefix]) {
-            let propertyName = qx.lang.String.firstLow(name.substring(pos));
-            if (properties && properties[propertyName]) {
-              return false;
-            }
-          }
-        }
+      memberNames.forEach(memberName => {
+        //note 2026-feb-02: we assume that the metadata does not have auto-generated property methods
 
-        // And then filter by the annotations
-        let annos = qx.Annotation.getMember(clazz, name, zx.io.remote.anno.Method);
+        let annos = AnnoUtil.getMember(this.__metaDb, classname, memberName, zx.io.remote.anno.Method);
         if (annos.length > 0) {
-          if (!this.__methods[name]) {
-            this.__methods[name] = {};
+          if (!this.__methods[memberName]) {
+            this.__methods[memberName] = {};
           }
-          this.__methods[name].annos = annos;
+          this.__methods[memberName].annosExtra = annos;
         }
       });
     },
@@ -162,61 +105,42 @@ qx.Class.define("zx.io.remote.proxy.ClassWriter", {
      * @returns {*}
      */
     _createTemplateData() {
-      let clazz = this.__clazz;
+      const AnnoUtil = qx.tool.compiler.meta.AnnoUtil;
+      let classname = this.__classname;
+      let classMeta = this.__metaDb.getMetaData(classname);
       let useClasses = {};
       let requireClasses = {};
 
-      const compileAnnos = annos => {
-        annos = annos.map(anno => {
-          let str = `new ${anno.classname}()`;
-          let props = [];
-          qx.Class.getProperties(anno.constructor).forEach(name => {
-            let upname = qx.lang.String.firstUp(name);
-            let def = qx.Class.getPropertyDefinition(anno.constructor, name);
-            let value = anno["get" + upname]();
-            if (def.init !== value) {
-              if (typeof value.classname == "string" && qx.Class.getByName(value.classname) === value) {
-                props.push('"' + name + '": ' + value.classname);
-              } else {
-                props.push('"' + name + '": ' + JSON.stringify(value));
-              }
-            }
-          });
-          if (props.length) {
-            str += ".set({ " + props.join(", ") + " })";
-          }
-          requireClasses[anno.classname] = true;
-          return str;
-        });
-        return "[" + annos.join(", ") + "]";
-      };
+      /**
+       *
+       * @param {AnnoExtra[]} annosExtra
+       * @returns {string}
+       */
+      const compileAnnos = annosExtra => `[${annosExtra.map(it => it.code).join(",")}]`;
 
       let it = {
-        classname: clazz.classname,
-        superclassname: clazz.superclass.classname,
+        classname: classname,
+        superclassname: classMeta.superClass,
         properties: Object.keys(this.__properties).map(propertyName => {
           let info = this.__properties[propertyName];
           let it = {
             name: propertyName
           };
 
-          if (info.refine || info.refined) {
+          if (info.refine) {
             if (info.init !== undefined) {
               it.init = info.init;
             }
             it.refine = true;
-            it.annoExpr = compileAnnos(info["@"]);
+            it.annoExpr = compileAnnos(info.annosExtra);
           } else {
             for (let key in info) {
               it[key] = info[key];
             }
-            if (info.refined) {
-              it.refine = true;
-            }
             let upname = qx.lang.String.firstUp(propertyName);
             it.apply = "_apply" + upname;
             it.event = "change" + upname;
-            it.annoExpr = compileAnnos(info["@"]);
+            it.annoExpr = compileAnnos(info.annosExtra);
           }
           return it;
         }),
@@ -224,7 +148,7 @@ qx.Class.define("zx.io.remote.proxy.ClassWriter", {
           let data = this.__methods[methodName];
           let it = {
             name: methodName,
-            annoExpr: data.annos ? compileAnnos(data.annos) : null,
+            annoExpr: data.annosExtra ? compileAnnos(data.annosExtra) : null,
             code: data.code
           };
 
@@ -235,14 +159,14 @@ qx.Class.define("zx.io.remote.proxy.ClassWriter", {
       Object.keys(this.__properties).forEach(propertyName => {
         let info = this.__properties[propertyName];
         if (info.check) {
-          let clazz = qx.Class.getByName(info.check);
-          if (clazz) {
-            useClasses[clazz.classname] = true;
+          let classname = info.check;
+          if (classname) {
+            useClasses[classname] = true;
           }
         }
       });
 
-      let anno = qx.Annotation.getOwnClass(clazz, zx.io.remote.anno.Class)[0] || null;
+      let anno = AnnoUtil.getOwnClass(this.__metaDb, classname, zx.io.remote.anno.Class)[0]?.anno;
       if (anno) {
         let mixins = anno.getClientMixins();
         if (mixins) {
@@ -276,9 +200,8 @@ qx.Class.define("zx.io.remote.proxy.ClassWriter", {
      *
      * @return {String} the code
      */
-    async getProxyClassCode() {
-      let strTemplate = await this.__classesWriter.loadTemplate("zx/io/remote/proxy/ProxyClass.tmpl");
-      let fn = zx.utils.Dot.template(strTemplate);
+    getProxyClassCode() {
+      let fn = zx.utils.Dot.template(this.__classesWriter.getTemplate());
       let it = this._createTemplateData();
       let strResult = fn(it);
       return strResult;

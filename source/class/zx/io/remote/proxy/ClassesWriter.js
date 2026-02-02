@@ -20,24 +20,9 @@ const path = require("path");
 
 qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
   extend: qx.core.Object,
-
-  construct() {
-    super();
-    this.__templateCache = {};
-  },
+  implement: [qx.tool.compiler.ISourceTransformer],
 
   properties: {
-    /** Directory to output proxy source code to */
-    outputPath: {
-      check: "String",
-      event: "changeOutputPath"
-    },
-
-    compilerTargetPath: {
-      check: "String",
-      event: "changeCompilerTargetPath"
-    },
-
     verbose: {
       init: false,
       check: "Boolean"
@@ -45,119 +30,108 @@ qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
   },
 
   members: {
-    /** @type{Map<String,Object>} template cache indexed by filename */
-    __templateCache: null,
-
-    /** @type{Object} the db.json written by the compiler */
-    _db: null,
+    /**
+     * @type {qx.tool.compiler.meta.MetaDatabase}
+     */
+    __metaDb: null,
+    /**
+     * @type {string}
+     * The dot template for generating proxy classes
+     */
+    __template: "",
 
     /**
-     * Loads a template from resources, caching the result
      *
-     * @param {*} resourceName
-     * @returns {Promise<String>} the content
-     * @async
+     * @param {qx.tool.compiler.meta.MetaDatabase} metaDb
      */
-    loadTemplate(resourceName) {
-      let info = null;
-      let filename = path.join(qx.util.LibraryManager.getInstance().get("zx", "resourceUri"), resourceName);
-
-      const loadTemplateImpl = async () => {
-        let stat = await fs.promises.stat(filename);
-        if (!info.contents || !info.mtime || info.mtime.before(stat.mtime)) {
-          info.contents = await fs.promises.readFile(filename, "utf8");
-          info.mtime = stat.mtime;
-        }
-        return info.contents;
-      };
-
-      info = this.__templateCache[filename];
-      if (info && info.promise) {
-        return info.promise;
-      }
-      if (!info) {
-        info = this.__templateCache[filename] = {};
-      }
-      info.promise = loadTemplateImpl();
-      return info.promise;
+    async init(metaDb) {
+      this.__metaDb = metaDb;
+      let fname = qx.util.ResourceManager.getInstance().toUri("zx/io/remote/proxy/ProxyClass.tmpl");
+      this.__template = await fs.promises.readFile(fname, "utf8");
     },
 
-    async _initialise() {
-      let db = await fs.promises.readFile(path.join(this.getCompilerTargetPath(), "db.json"), "utf8");
-      this._db = JSON.parse(db);
+    /**
+     *
+     * @returns {string}
+     */
+    getTemplate() {
+      return this.__template;
     },
 
-    async writeAllProxiedClasses() {
-      await this._initialise();
-
-      return await this.writeProxiedClassesFor(Object.keys(this._db.classInfo));
+    /**
+     * @override interface qx.tool.compiler.ISourceTransformer
+     * @param {qx.tool.compiler.Controller.SourceInfo} sourceInfo
+     */
+    shouldTransform(sourceInfo) {
+      return this.shouldBeProxied(sourceInfo.classname);
     },
 
-    async writeProxiedClassesFor(classnames) {
-      if (!this._db) {
-        await this._initialise();
-      }
+    /**
+     * @param {string} classname
+     * @returns {boolean} Whether this class should be proxied
+     */
+    shouldBeProxied(classname) {
+      let meta = this.__metaDb.getMetaData(classname);
 
-      if (!qx.lang.Type.isArray(classnames)) {
-        classnames = [classnames];
-      }
-
-      if (this.isVerbose()) {
-        this.info(`Generating classes to ${path.resolve(this.getOutputPath())}`);
-      }
-
-      let classes = {};
-
-      classnames.forEach(classname => {
-        let info = this._db.classInfo[classname];
-        let ifc = qx.Interface.getByName(classname);
-        if (ifc) {
-          if (ifc !== zx.io.remote.IProxied) {
-            let flat = qx.Interface.flatten([ifc]);
-            if (qx.lang.Array.contains(flat, zx.io.remote.IProxied)) {
-              classes[classname] = ifc;
-            }
-          }
-        } else {
-          let clazz = qx.Class.getByName(classname);
-          if (clazz && qx.Class.hasInterface(clazz, zx.io.remote.IProxied)) {
-            classes[classname] = clazz;
-          }
-        }
-      });
-
-      for (let classname in classes) {
-        let clazz = classes[classname];
-        let filename = path.join(this.getOutputPath(), classname.replace(/\./g, path.sep)) + ".js";
-
-        let anno = qx.Annotation.getOwnClass(clazz, zx.io.remote.anno.Class)[0] || null;
-        if (anno && anno.getProxy() == "never") {
-          try {
-            await fs.promises.unlink(filename);
-          } catch (ex) {
-            if (ex.code != "ENOENT") {
-              throw ex;
-            }
-          }
-          continue;
-        }
-        if (this.isVerbose()) {
-          this.info(`Writing class ${clazz.classname}`);
-        }
-        let writer = new zx.io.remote.proxy.ClassWriter(this, clazz);
-        let str = await writer.getProxyClassCode();
-
-        let dirname = path.dirname(filename);
-        await fs.promises.mkdir(dirname, { recursive: true });
-
-        if (fs.existsSync(filename)) {
-          let current = await fs.promises.readFile(filename, "utf8");
-          if (current == str) {
+      /**
+       *
+       * @param {string} classname
+       * @returns {string[]}
+       */
+      const getInterfacesFlat = classname => {
+        let queue = [classname];
+        let out = [];
+        while (queue.length > 0) {
+          let current = queue.shift();
+          let meta = this.__metaDb.getMetaData(current);
+          if (!meta) {
             continue;
           }
+          if (meta.type === "interface") {
+            out.push(current);
+          }
+          let implements = meta.interfaces || [];
+          queue.push(...implements);
+          if (meta.type === "class" && meta.superClass) {
+            queue.push(meta.superClass);
+          }
         }
-        await fs.promises.writeFile(filename, str, "utf8");
+        return out;
+      };
+
+      let interfaces = getInterfacesFlat(classname);
+      if (!interfaces.includes("zx.io.remote.IProxied")) {
+        return false;
       }
+
+      const AnnoUtil = qx.tool.compiler.meta.AnnoUtil;
+      let annotations = meta.annotation?.map(AnnoUtil.evalAnno);
+      if (annotations) {
+        for (let anno of annotations) {
+          if (anno instanceof zx.io.remote.anno.Class) {
+            if (anno.getProxy() == "never") {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    },
+
+    /**@override interface qx.tool.compiler.ISourceTransformer */
+    transform(sourceInfo) {
+      return this.generateProxy(sourceInfo.classname);
+    },
+
+    /**
+     *
+     * @param {string} classname
+     * @returns {string} The resulting source
+     */
+    generateProxy(classname) {
+      let writer = new zx.io.remote.proxy.ClassWriter(this, classname, this.__metaDb);
+      let str = writer.getProxyClassCode();
+      return str;
     }
   }
 });

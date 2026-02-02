@@ -11,10 +11,5 @@
       "directory": "cms/blobs"
     },
     "statusFile": "database-status.json"
-  },
-
-  "createProxies": {
-    "outputPath": "source/proxies",
-    "compilerTargetPath": "compiled/source-node"
   }
 }

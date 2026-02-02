@@ -5,7 +5,6 @@
       "type": "source",
       "application-types": ["browser"],
       "outputPath": "compiled/source",
-      "proxySourcePath": "source/proxies",
       "babelOptions": {
         "targets": "Chrome >= 72, Firefox >= 64, edge >= 18"
       },
@@ -34,7 +33,6 @@
       "type": "build",
       "application-types": ["browser"],
       "outputPath": "compiled/build",
-      "proxySourcePath": "source/proxies",
       "babelOptions": {
         "targets": "Chrome >= 72, Firefox >= 64, edge >= 18"
       },

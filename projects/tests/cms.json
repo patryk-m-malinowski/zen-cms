@@ -11,9 +11,5 @@
   "session": {
     "secret": "TXfbMmRkjw7TascpJ4MNbEYRYqjRvvFC"
   },
-  "theme": "themes.CmsPlainTheme",
-  "createProxies": {
-    "outputPath": "source/proxies",
-    "compilerTargetPath": "compiled/source-node"
-  }
+  "theme": "themes.CmsPlainTheme"
 }
