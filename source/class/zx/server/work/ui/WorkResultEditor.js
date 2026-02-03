@@ -19,7 +19,15 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
     this.bind("value.userKilled", this.getQxObject("btnKill"), "enabled", {
       converter: value => !value
     });
+
+    this.__debounceUpdateConsoleOutput = new zx.utils.Debounce(() => {
+      let value = this.getValue();
+      if (value) {
+        this.getQxObject("edtConsoleOutput").setValue(value.getLogOutput());
+      }
+    }, 1000);
   },
+
   properties: {
     value: {
       check: "zx.server.work.ui.model.WorkResult",
@@ -29,6 +37,7 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
       apply: "_applyValue"
     }
   },
+
   objects: {
     tabView() {
       let tv = new qx.ui.tabview.TabView();
@@ -36,6 +45,7 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
       tv.add(this.getQxObject("pageConsoleOutput"));
       return tv;
     },
+
     pageDetails() {
       let pg = new qx.ui.tabview.ScrollingPage("Details");
       let comp = pg.getChildrenContainer();
@@ -67,14 +77,14 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
       );
       return pg;
     },
+
     pageConsoleOutput() {
       let pg = new qx.ui.tabview.Page("Output");
       pg.setLayout(new qx.ui.layout.VBox());
       pg._add(this.getQxObject("edtConsoleOutput"), { flex: 1 });
-      this.bind("value.logOutput", this.getQxObject("edtConsoleOutput"), "value");
-
       return pg;
     },
+
     compRunningOnly() {
       let comp = new qx.ui.container.Composite(new qx.ui.layout.HBox(5).set({ alignY: "middle" })).set({ visibility: "excluded" });
       comp.add(new qx.ui.basic.Label("Last Activity:"));
@@ -82,6 +92,7 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
       comp.add(this.getQxObject("btnKill"));
       return comp;
     },
+
     edtLastActivity() {
       let edt = new qx.ui.form.TextField().set({ readOnly: true, minWidth: 300 });
 
@@ -108,11 +119,13 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
       );
       return edt;
     },
+
     toolbar() {
       let tb = new qx.ui.toolbar.ToolBar();
       tb.add(this.getQxObject("btnStarred"));
       return tb;
     },
+
     btnStarred() {
       let btn = new qx.ui.toolbar.CheckBox(null, "@FontAwesome/star/16");
       btn.addListener("changeValue", evt => {
@@ -131,6 +144,7 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
       });
       return btn;
     },
+
     btnKill() {
       let btn = new qx.ui.toolbar.Button("Kill", "@FontAwesome/xmark/16");
       btn.addListener("execute", async () => {
@@ -150,34 +164,60 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
       });
       return btn;
     },
+
     edtTitle() {
       return new qx.ui.form.TextField().set({ readOnly: true });
     },
+
     edtDescription() {
       return new qx.ui.form.TextArea().set({ readOnly: true, minWidth: 400, minHeight: 150 });
     },
+
     edtWorkJson() {
       return new qx.ui.form.TextArea().set({ readOnly: true, minWidth: 400, minHeight: 150, wrap: false });
     },
+
     edtConsoleOutput() {
       return new qx.ui.form.TextArea().set({ readOnly: true, minWidth: 600, minHeight: 450 });
     },
+
     edtExceptionStack() {
       return new qx.ui.form.TextArea().set({ readOnly: true, minWidth: 400, minHeight: 300 });
     }
   },
 
   members: {
+    /** @type{Boolean} anti-recursion flag */
     __inApplyValue: false,
+
+    /** @type{zx.utils.Debounce} dbounces updates to the console output */
+    __debounceUpdateConsoleOutput: null,
+
+    /**
+     * @Override
+     */
     _applyValue(value, oldValue) {
       this.__inApplyValue = true;
       if (value) {
         let userData = zx.server.work.ui.UserData.getInstance();
         this.getQxObject("btnStarred").setValue(userData.getStarredWorkResults().includes(value.toUuid()));
+        value.addListener("changeLogOutput", this.__onLogOutputChange, this);
       } else {
         this.getQxObject("btnStarred").setValue(false);
       }
+      if (oldValue) {
+        oldValue.removeListener("changeLogOutput", this.__onLogOutputChange, this);
+      }
       this.__inApplyValue = false;
+    },
+
+    /**
+     * Event handler for log output changes; trigger a debounced update of the console output.
+     *
+     * @param {qx.event.type.Data} evt
+     */
+    __onLogOutputChange(evt) {
+      this.__debounceUpdateConsoleOutput.run();
     }
   }
 });

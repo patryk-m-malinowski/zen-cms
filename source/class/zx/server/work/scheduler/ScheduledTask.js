@@ -42,6 +42,7 @@ qx.Class.define("zx.server.work.scheduler.ScheduledTask", {
       check: "String",
       event: "changeWebsiteName"
     },
+
     /** Title for the task */
     title: {
       "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED],

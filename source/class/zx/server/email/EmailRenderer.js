@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 /**
  * Used to render HTML emails in the browser and then send them
@@ -40,9 +40,15 @@ qx.Class.define("zx.server.email.EmailRenderer", {
             parameters
           } = data;
 
-          parameters.to = parameters.to?.split(",") ?? [];
-          parameters.cc = parameters.cc?.split(",") ?? [];
-          parameters.bcc = parameters.bcc?.split(",") ?? [];
+          const collapseAddresses = value => {
+            if (qx.lang.Type.isArray(value)) {
+              return value;
+            }
+            return value?.split(",") ?? [];
+          };
+          parameters.to = collapseAddresses(parameters.to);
+          parameters.cc = collapseAddresses(parameters.cc);
+          parameters.bcc = collapseAddresses(parameters.bcc);
           worker.appendWorkLog("Email body to send: " + htmlBody);
           worker.appendWorkLog("Email parameters: " + JSON.stringify(parameters, null, 2));
 
