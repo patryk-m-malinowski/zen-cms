@@ -72,7 +72,7 @@ qx.Class.define("zx.cli.commands.GetCommand", {
     createCliCommand() {
       let cmd = new zx.cli.Command("get").set({
         description: "Gets the resource as the web server would render it",
-        async run() {
+        async runFunc() {
           let { args } = this.getValues();
           return await new zx.cli.commands.GetCommand(args["url-path"]).run();
         }

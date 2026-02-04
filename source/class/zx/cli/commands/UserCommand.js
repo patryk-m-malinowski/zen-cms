@@ -173,7 +173,7 @@ qx.Class.define("zx.cli.commands.UserCommand", {
        */
       sub = new zx.cli.Command("create").set({
         description: `Creates a user account`,
-        async run() {
+        async runFunc() {
           const { args, flags } = this.getValues();
           let cmd = new zx.cli.commands.UserCommand();
           let password = flags.password;
@@ -218,7 +218,7 @@ qx.Class.define("zx.cli.commands.UserCommand", {
        */
       sub = new zx.cli.Command("create-permission").set({
         description: `Creates a permission`,
-        async run() {
+        async runFunc() {
           const { args, flags } = this.getValues();
           let cmd = new zx.cli.commands.UserCommand();
           cmd.createPermission(args["short-code"], args["description"]);
@@ -245,7 +245,7 @@ qx.Class.define("zx.cli.commands.UserCommand", {
        */
       sub = new zx.cli.Command("add-permission").set({
         description: `Adds a permission to a user account`,
-        async run() {
+        async runFunc() {
           const { args, flags } = this.getValues();
           let cmd = new zx.cli.commands.UserCommand();
           cmd.addPermission(args["username"], args["permission"]);
@@ -273,7 +273,7 @@ qx.Class.define("zx.cli.commands.UserCommand", {
        */
       sub = new zx.cli.Command("remove-permission").set({
         description: `Removes a permission from a user account`,
-        async run() {
+        async runFunc() {
           const { args, flags } = this.getValues();
           let cmd = new zx.cli.commands.UserCommand();
           cmd.removePermission(args["username"], args["permission"]);
@@ -301,7 +301,7 @@ qx.Class.define("zx.cli.commands.UserCommand", {
        */
       sub = new zx.cli.Command("set-password").set({
         description: `Sets a users password`,
-        async run() {
+        async runFunc() {
           const { args, flags } = this.getValues();
           let cmd = new zx.cli.commands.UserCommand();
           let password = flags.password;

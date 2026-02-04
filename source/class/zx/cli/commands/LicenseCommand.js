@@ -125,7 +125,7 @@ qx.Class.define("zx.cli.commands.LicenseCommand", {
     createCliCommand() {
       let cmd = new zx.cli.Command("license").set({
         description: "Edits the license header on source files",
-        async run() {
+        async runFunc() {
           let { args, flags } = this.getValues();
           let cmd = new zx.cli.commands.LicenseCommand(flags["template"], args["files"]);
           cmd.set({

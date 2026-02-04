@@ -28,7 +28,7 @@ qx.Class.define("zx.cli.commands.ServeCommand", {
 
     this.set({
       description: "Runs the CMS Web Server",
-      run: async () => await this.run()
+      runFunc: async () => await this.run()
     });
 
     this.addFlag(

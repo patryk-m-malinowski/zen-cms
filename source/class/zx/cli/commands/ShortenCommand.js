@@ -22,7 +22,7 @@ qx.Class.define("zx.cli.commands.ShortenCommand", {
     createCliCommand() {
       let cmd = new zx.cli.Command("url-shorten").set({
         description: "Shortens a string",
-        async run() {
+        async runFunc() {
           let { args } = this.getValues();
           let result = zx.cms.website.ShortUrl.shorten(args["value"]);
           console.log("Shorted to: " + result);
