@@ -108,7 +108,7 @@ qx.Class.define("zx.reports.ReportRunner", {
       try {
         let result = await this.__iterator.execute();
         let drilldown = await this.__iterator.getDrilldown();
-        console.log("Drilldown: ", JSON.stringify(drilldown, null, 2));
+        //console.log("Drilldown: ", JSON.stringify(drilldown, null, 2));
         rootElement.remove(loadingMessage);
 
         let reportElement = <div print-control></div>;
