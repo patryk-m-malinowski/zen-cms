@@ -97,6 +97,19 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
     },
 
     /**
+     * If specified, this callback will be called if an exception is thrown during polling.
+     * This allows you to handle polling exceptions, which may be common if the server is not always available.
+     * The callback will be passed the exception as an argument.
+     * If this callback is not specified, polling exceptions will be thrown as normal.
+     *
+     */
+    pollExceptionCallback: {
+      init: null,
+      nullable: true,
+      check: "Function"
+    },
+
+    /**
      * If specified, this encryption manager will be used to encrypt messages
      * before they are sent to the server,
      * and to decrypt messages received from the server.
@@ -226,7 +239,16 @@ qx.Class.define("zx.io.api.client.AbstractClientTransport", {
         return;
       }
       let requestJson = { headers: { "Session-Uuid": this.__sessionUuid }, type: "poll", body: {} };
-      await this.postMessage(null, requestJson);
+
+      try {
+        await this.postMessage(null, requestJson);
+      } catch (e) {
+        if (this.getPollExceptionCallback()) {
+          this.getPollExceptionCallback()(e);
+        } else {
+          throw e;
+        }
+      }
     },
 
     /**
