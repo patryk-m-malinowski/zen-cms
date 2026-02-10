@@ -37,8 +37,6 @@ qx.Class.define("zx.io.api.server.Request", {
     this.setBody(data.body ?? {});
     this.setPath(data.path ?? null);
     this.setType(data.type ?? "callMethod");
-    this.initPathArgs({});
-    this.initQuery({});
 
     let sessionUuid = this.getHeader("Session-Uuid");
     if (sessionUuid) {
@@ -126,8 +124,8 @@ qx.Class.define("zx.io.api.server.Request", {
      * For HTTP requests, this is the query string in the URL
      */
     query: {
-      deferredInit: true,
-      check: "Object"
+      check: "Object",
+      initFunction: () => ({})
     },
 
     /**
@@ -135,8 +133,8 @@ qx.Class.define("zx.io.api.server.Request", {
      * Only applicable to REST requests
      */
     pathArgs: {
-      deferredInit: true,
-      check: "Object"
+      check: "Object",
+      initFunction: () => ({})
     },
 
     /**

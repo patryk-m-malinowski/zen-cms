@@ -73,22 +73,7 @@ qx.Class.define("zx.server.work.ui.WorkerPoolEditor", {
     searchField() {
       let fld = new zx.ui.form.SearchField();
       fld.linkWidget(this.getQxObject("btnShowStarred"));
-      fld.addListener("search", async evt => {
-        let table = this.getQxObject("tblPastWork");
-        table.resetModel();
-        let model = await this.getValue()
-          .getScheduler()
-          .getPastWorkResults({ text: evt.getData(), pool: { id: this.getValue().getId() } });
-        if (evt.getData() !== fld.getValue()) {
-          return;
-        }
-        if (this.getQxObject("btnShowStarred").getValue()) {
-          let userData = zx.server.work.ui.UserData.getInstance();
-          model = model.filter(item => userData.getStarredWorkResults().includes(item.toUuid()));
-        }
-        model.sort((a, b) => b.getStarted().getTime() - a.getStarted().getTime());
-        table.setModel(new qx.data.Array(model));
-      });
+      fld.addListener("search", this.__refresh, this);
       return fld;
     },
 
@@ -108,5 +93,27 @@ qx.Class.define("zx.server.work.ui.WorkerPoolEditor", {
       return new zx.server.work.ui.WorkResultEditor().set({ minHeight: 600, visibility: "excluded" });
     }
   },
-  members: {}
+  members: {
+    __refreshId: 0,
+    async __refresh() {
+      if (!this.getValue()) return;
+      let id = ++this.__refreshId;
+      let table = this.getQxObject("tblPastWork");
+      let search = this.getQxObject("searchField").getValue();
+      table.resetModel();
+      let model = await this.getValue()
+        .getScheduler()
+        .getPastWorkResults({ text: search, pool: { id: this.getValue().getId() } });
+
+      if (id !== this.__refreshId) {
+        return;
+      }
+      if (this.getQxObject("btnShowStarred").getValue()) {
+        let userData = zx.server.work.ui.UserData.getInstance();
+        model = model.filter(item => userData.getStarredWorkResults().includes(item.toUuid()));
+      }
+      model.sort((a, b) => b.getStarted().getTime() - a.getStarted().getTime());
+      table.setModel(new qx.data.Array(model));
+    }
+  }
 });

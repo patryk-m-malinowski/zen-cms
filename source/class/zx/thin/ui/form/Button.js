@@ -70,7 +70,7 @@ qx.Class.define("zx.thin.ui.form.Button", {
     },
 
     /** What parts to display */
-    show: {
+    showParts: {
       init: "both",
       nullable: false,
       check: ["icon", "label", "both"],

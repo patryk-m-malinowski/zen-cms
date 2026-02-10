@@ -91,7 +91,7 @@ qx.Class.define("zx.cli.commands.DbCommand", {
 
       let sub = new zx.cli.Command("import").set({
         description: `Imports the database from template`,
-        async run() {
+        async runFunc() {
           const { args, flags } = this.getValues();
           let cmd = new zx.cli.commands.DbCommand();
           return await cmd.importDatabase();

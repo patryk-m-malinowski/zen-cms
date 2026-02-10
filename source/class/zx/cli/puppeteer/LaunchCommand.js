@@ -39,7 +39,7 @@ qx.Class.define("zx.cli.puppeteer.LaunchCommand", {
     createCliCommand() {
       let cmd = new zx.cli.Command("launch").set({
         description: "Runs the Puppeteer server",
-        async run() {
+        async runFunc() {
           let launch = new zx.cli.puppeteer.LaunchCommand();
           let { flags } = this.getValues();
           return await launch.run(flags);

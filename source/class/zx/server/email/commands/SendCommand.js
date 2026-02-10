@@ -40,7 +40,7 @@ qx.Class.define("zx.server.email.commands.SendCommand", {
       })
     );
 
-    this.setRun(async ({ flags, args }) => {
+    this.setRunFunc(async ({ flags, args }) => {
       await new zx.server.Standalone().start();
       await this.__doit(args.id, flags["delete-from-queue"]);
       console.log("Done.");

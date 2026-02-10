@@ -30,7 +30,7 @@ qx.Class.define("zx.server.puppeteer.PuppeteerWorkController", {
   },
 
   properties: {
-    debug: {
+    enableDebug: {
       init: false,
       check: "Boolean"
     }
@@ -88,7 +88,7 @@ qx.Class.define("zx.server.puppeteer.PuppeteerWorkController", {
 
       let chromium = await this.__worker.getChromium();
 
-      let debugOnStartup = !!json.debugOnStartup || this.getDebug();
+      let debugOnStartup = !!json.debugOnStartup || this.getEnableDebug();
       if (qx.core.Environment.get(this.classname + ".askDebugOnStartup")) {
         // you may want to set `debugOnStartup` to `true`
         debugger;
@@ -101,7 +101,7 @@ qx.Class.define("zx.server.puppeteer.PuppeteerWorkController", {
 
       let puppeteerClient = new zx.server.puppeteer.PuppeteerClient().set({
         url: this.__url,
-        debug: this.getDebug(),
+        debug: this.getEnableDebug(),
         debugOnStartup: debugOnStartup,
         chromiumEndpoint: chromium.getEndpoint(),
         usesZxApi: true,

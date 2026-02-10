@@ -34,7 +34,7 @@ qx.Class.define("zx.server.email.commands.FlushCommand", {
       })
     );
 
-    this.setRun(async ({ flags, args }) => {
+    this.setRunFunc(async ({ flags, args }) => {
       await new zx.server.Standalone().start();
 
       let flushObj = new zx.server.email.FlushQueue();

@@ -130,7 +130,7 @@ qx.Class.define("zx.ui.form.PickBox", {
           return new qx.ui.basic.Atom().set({ allowGrowX: true });
 
         case "pick":
-          var btn = new qx.ui.form.Button("Pick").set({ show: "icon" });
+          var btn = new qx.ui.form.Button("Pick").set({ showFeatures: "icon" });
           btn.addListener("execute", () => this._pick());
           return btn;
       }

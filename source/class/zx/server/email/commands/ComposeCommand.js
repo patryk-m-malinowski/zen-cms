@@ -61,7 +61,7 @@ qx.Class.define("zx.server.email.commands.ComposeCommand", {
       })
     );
 
-    this.setRun(async ({ flags }) => {
+    this.setRunFunc(async ({ flags }) => {
       await new zx.server.Standalone().start();
       let htmlBody = flags["html-body"] ? await fs.readFile(flags["html-body"], "utf8") : null;
       let textBody = flags["text-body"] ? await fs.readFile(flags["text-body"], "utf8") : null;

@@ -302,6 +302,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
      * Apply for `poolConfig` property
      */
     _applyPoolConfig(value, oldValue) {
+      if (!value) return;
       let pool = this.getQxObject("pool");
       ["minSize", "maxSize", "timeout", "pollInterval"].forEach(prop => {
         let upname = qx.lang.String.firstUp(prop);
@@ -361,7 +362,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
       if (status === "dead") {
         pool.destroyResource(workerTracker);
       } else if (status === "stopped") {
-        workerTracker.reuse();
+        queueMicrotask(() => workerTracker.reuse());
         pool.release(workerTracker);
       }
       if (workResult) {

@@ -220,12 +220,12 @@ qx.Class.define("zx.ui.editor.FormEditor", {
             widgetToAdd.setLayout(new qx.ui.layout.HBox());
             widgetToAdd.add(widget, { flex: 1 });
             widgetToAdd.add(widgetInfo.invalidMessageAtom);
-            widgetInfo.invalidMessageAtom.setShow("icon");
+            widgetInfo.invalidMessageAtom.setShowFeatures("icon");
           } else {
             widgetToAdd.setLayout(new qx.ui.layout.VBox());
             widgetToAdd.add(widget);
             widgetToAdd.add(widgetInfo.invalidMessageAtom);
-            widgetInfo.invalidMessageAtom.setShow("both");
+            widgetInfo.invalidMessageAtom.setShowFeatures("both");
           }
           widget.addListener("changeValid", this.__onWidgetChangeValid.bind(this, widgetInfo));
           this.__onWidgetChangeValid(widgetInfo, null);

@@ -32,7 +32,7 @@ qx.Class.define("zx.ui.tree.column.AtomColumn", {
       event: "changeIconPath"
     },
 
-    show: {
+    showFeatures: {
       init: "both",
       check: ["both", "icon", "label"],
       event: "changeShow"
@@ -84,7 +84,7 @@ qx.Class.define("zx.ui.tree.column.AtomColumn", {
       } else widget.setLabel("" + (value || ""));
       if (!row.isHeader()) {
         widget.setIcon(icon);
-        widget.setShow(this.getShow());
+        widget.setShowFeatures(this.getShowFeatures());
       }
     }
   }

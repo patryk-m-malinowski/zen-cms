@@ -58,7 +58,7 @@ qx.Class.define("zx.cli.Command", {
 
     /** Function to run this command, called with the result of `getValues()` and the command itself
      */
-    run: {
+    runFunc: {
       init: null,
       nullable: true,
       check: "Function"
@@ -531,7 +531,7 @@ qx.Class.define("zx.cli.Command", {
      * @returns
      */
     async run() {
-      let fn = this.getRun();
+      let fn = this.getRunFunc();
       if (fn != null) {
         return await fn.call(this, this.getValues(), this);
       }

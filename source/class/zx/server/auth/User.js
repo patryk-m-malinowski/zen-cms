@@ -34,7 +34,7 @@ qx.Class.define("zx.server.auth.User", {
   construct(virtualUser) {
     super();
     this.__virtualUser = !!virtualUser;
-    this.initApiTokens(new zx.data.Map());
+
     this.set({
       permissions: new zx.data.IndexedArray().set({
         keyGenerator: perm => perm.getShortCode()
@@ -113,7 +113,7 @@ qx.Class.define("zx.server.auth.User", {
      */
     apiTokens: {
       check: "zx.data.Map",
-      deferredInit: true,
+      initFunction: () => new zx.data.Map(),
       event: "changeApiTokens",
       nullable: false,
       "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED]

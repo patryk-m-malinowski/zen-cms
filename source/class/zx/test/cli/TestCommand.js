@@ -52,7 +52,7 @@ qx.Class.define("zx.test.cli.TestCommand", {
     createCliCommand() {
       return new zx.cli.Command("test").set({
         description: "Runs some unit tests (this is only expected to work in the zx.cms directory)",
-        run: async () => {
+        runFunc: async () => {
           return await new zx.test.cli.TestCommand().run();
         }
       });

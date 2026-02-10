@@ -88,11 +88,11 @@ qx.Class.define("zx.ui.files.FileUpload", {
           return lbl;
         }
         case "btnUpload": {
-          let btn = new com.zenesis.qx.upload.UploadButton("Browse", "@FontAwesome/upload/16").set({ show: "icon" });
+          let btn = new com.zenesis.qx.upload.UploadButton("Browse", "@FontAwesome/upload/16").set({ showFeatures: "icon" });
           return btn;
         }
         case "btnClear": {
-          let btn = new qx.ui.form.Button("Delete", "@FontAwesome/xmark/16").set({ visibility: "excluded", show: "icon" });
+          let btn = new qx.ui.form.Button("Delete", "@FontAwesome/xmark/16").set({ visibility: "excluded", showFeatures: "icon" });
           return btn;
         }
       }

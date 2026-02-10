@@ -34,7 +34,7 @@ qx.Class.define("zx.server.email.commands.ShowQueueCommand", {
       })
     );
 
-    this.setRun(async ({ flags }) => {
+    this.setRunFunc(async ({ flags }) => {
       await new zx.server.Standalone().start();
       await this.__showQueue(flags["failed-only"]);
       return 0;

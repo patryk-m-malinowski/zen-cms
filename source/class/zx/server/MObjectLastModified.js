@@ -123,13 +123,7 @@ qx.Mixin.define("zx.server.MObjectLastModified", {
           }
         }
         let defaultIncluded = !!defaultAnno && !defaultAnno.isExcluded();
-        let allPropertyNames = {};
-        for (let tmp = clazz; tmp && !defaultAnno; tmp = tmp.superclass) {
-          for (let propertyName in tmp.$$properties) {
-            allPropertyNames[propertyName] = true;
-          }
-        }
-        allPropertyNames = Object.keys(allPropertyNames);
+        let allPropertyNames = defaultAnno ? [] : qx.Class.getProperties(clazz);
         let properties = {};
         allPropertyNames.forEach(propertyName => {
           let annos = qx.Annotation.getProperty(clazz, propertyName, zx.server.anno.LastModified);

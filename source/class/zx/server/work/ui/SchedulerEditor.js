@@ -57,20 +57,7 @@ qx.Class.define("zx.server.work.ui.SchedulerEditor", {
     searchField() {
       let fld = new zx.ui.form.SearchField();
       fld.linkWidget(this.getQxObject("btnShowStarred"));
-      fld.addListener("search", async evt => {
-        let table = this.getQxObject("tblPastWork");
-        table.resetModel();
-        let model = await this.getValue().getPastWorkResults({ text: evt.getData() });
-        if (evt.getData() !== fld.getValue()) {
-          return;
-        }
-        if (this.getQxObject("btnShowStarred").getValue()) {
-          let userData = zx.server.work.ui.UserData.getInstance();
-          model = model.filter(item => userData.getStarredWorkResults().includes(item.toUuid()));
-        }
-        model.sort((a, b) => b.getStarted().getTime() - a.getStarted().getTime());
-        table.setModel(new qx.data.Array(model));
-      });
+      fld.addListener("search", this.__refresh, this);
       return fld;
     },
 
@@ -84,10 +71,30 @@ qx.Class.define("zx.server.work.ui.SchedulerEditor", {
   },
 
   members: {
+    __refreshId: 0,
     _applyValue(value, old) {
       if (value) {
         this.__refreshCurrentWork();
       }
+    },
+    async __refresh() {
+      let id = ++this.__refreshId;
+      if (!this.getValue()) {
+        return; // no scheduler set
+      }
+      let search = this.getQxObject("searchField").getValue();
+      let table = this.getQxObject("tblPastWork");
+      table.resetModel();
+      let model = await this.getValue().getPastWorkResults({ text: search });
+      if (id !== this.__refreshId) {
+        return;
+      }
+      if (this.getQxObject("btnShowStarred").getValue()) {
+        let userData = zx.server.work.ui.UserData.getInstance();
+        model = model.filter(item => userData.getStarredWorkResults().includes(item.toUuid()));
+      }
+      model.sort((a, b) => b.getStarted().getTime() - a.getStarted().getTime());
+      table.setModel(new qx.data.Array(model));
     },
     async __refreshCurrentWork() {
       let tbl = this.getQxObject("tblCurrentWork");
