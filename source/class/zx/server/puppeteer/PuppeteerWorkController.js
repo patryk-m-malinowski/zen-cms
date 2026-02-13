@@ -101,7 +101,7 @@ qx.Class.define("zx.server.puppeteer.PuppeteerWorkController", {
 
       let puppeteerClient = new zx.server.puppeteer.PuppeteerClient().set({
         url: this.__url,
-        debug: this.getEnableDebug(),
+        enableDebug: this.getEnableDebug(),
         debugOnStartup: debugOnStartup,
         chromiumEndpoint: chromium.getEndpoint(),
         usesZxApi: true,
