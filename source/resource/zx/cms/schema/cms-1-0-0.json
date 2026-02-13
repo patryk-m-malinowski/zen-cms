@@ -142,20 +142,6 @@
         }
       }
     },
-    "createProxies": {
-      "type": "object",
-      "description": "Automatically create client proxies when starting the server",
-      "properties": {
-        "outputPath": {
-          "type": "string",
-          "description": "The directory to create the proxies in (must match compile.json for browser targets)"
-        },
-        "compilerTargetPath": {
-          "type": "string",
-          "description": "The directory the compiler outputs the server classes into"
-        }
-      }
-    },
     "firebase": {
       "type": "object",
       "description": "Firebase configuration",

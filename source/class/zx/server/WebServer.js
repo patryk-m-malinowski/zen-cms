@@ -124,21 +124,6 @@ qx.Class.define("zx.server.WebServer", {
      */
     async start() {
       await super.start();
-      if (this._config.createProxies) {
-        let proxiesOutputPath = this._config.createProxies?.outputPath;
-        if (proxiesOutputPath) {
-          let compilerTargetPath = this._config.createProxies?.compilerTargetPath;
-          if (!compilerTargetPath) {
-            throw new Error("Missing compilerTargetPath in cms.json/createProxies");
-          }
-          let ctlr = new zx.io.remote.proxy.ClassesWriter().set({
-            outputPath: proxiesOutputPath,
-            compilerTargetPath: compilerTargetPath
-          });
-
-          await ctlr.writeAllProxiedClasses();
-        }
-      }
       await this._startServer();
       await this._registerUrls();
     },

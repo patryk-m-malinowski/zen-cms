@@ -19,7 +19,6 @@ const path = require("path");
 const { isMainThread, workerData } = require("node:worker_threads");
 
 /**
- * @use(zx.cli.CreateProxiesCommand)
  * @use(zx.cli.GetCommand)
  * @use(zx.cli.ServeCommand)
  * @use(zx.cli.UserCommand)
@@ -96,7 +95,6 @@ qx.Class.define("zx.cli.CliApp", {
       rootCmd.addSubcommand(new zx.cli.commands.ServeCommand());
       rootCmd.addSubcommand(zx.cli.commands.DbCommand.createCliCommand());
       rootCmd.addSubcommand(zx.cli.commands.GetCommand.createCliCommand());
-      rootCmd.addSubcommand(zx.cli.commands.CreateProxiesCommand.createCliCommand());
       rootCmd.addSubcommand(zx.cli.commands.UserCommand.createCliCommand());
       rootCmd.addSubcommand(zx.test.cli.TestCommand.createCliCommand());
       rootCmd.addSubcommand(zx.cli.commands.ShortenCommand.createCliCommand());
