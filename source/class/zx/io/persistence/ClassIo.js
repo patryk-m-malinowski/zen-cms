@@ -988,18 +988,11 @@ qx.Class.define("zx.io.persistence.ClassIo", {
       }
 
       endpoint.beginChangingProperty(obj, propertyName);
-      return zx.utils.Promisify.resolveNow(value, value => {
-        try {
-          var result = qx.data.SingleValueBinding.set(obj, propertyName, value);
-        } catch (e) {
-          endpoint.endChangingProperty(obj, propertyName);
-          throw e;
-        }
-
-        return zx.utils.Promisify.resolveNow(result, null, null, () => {
-          endpoint.endChangingProperty(obj, propertyName);
-        });
-      });
+      try {
+        obj.set(propertyName, value);
+      } finally {
+        endpoint.endChangingProperty(obj, propertyName);
+      }
     },
 
     /**
