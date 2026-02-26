@@ -30,8 +30,7 @@ qx.Class.define("zx.test.content.DemoContentPiece", {
       init: 0,
       nullable: false,
       check: "Integer",
-      apply: "_applyMustNotBeThree",
-      async: true
+      apply: "_applyMustNotBeThree"
     }
   },
 

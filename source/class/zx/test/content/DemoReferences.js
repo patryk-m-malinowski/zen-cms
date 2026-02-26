@@ -29,7 +29,6 @@ qx.Class.define("zx.test.content.DemoReferences", {
     other: {
       init: null,
       nullable: true,
-      async: true,
       event: "changeOther",
       check: "zx.test.content.DemoReferences",
       "@": zx.io.persistence.anno.Property.DEFAULT

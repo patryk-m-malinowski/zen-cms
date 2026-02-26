@@ -44,8 +44,7 @@ qx.Class.define("zx.reports.api.ServerReportDescriptor", {
       check: "Object",
       event: "changeParams",
       nullable: true,
-      apply: "_applyParams",
-      async: true
+      apply: "_applyParams"
     }
   },
 

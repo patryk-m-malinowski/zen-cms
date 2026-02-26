@@ -41,8 +41,7 @@ qx.Class.define("zx.app.auth.UsersEditor", {
       nullable: true,
       check: "Object",
       event: "changeCurrentUserJson",
-      apply: "_applyCurrentUserJson",
-      async: true
+      apply: "_applyCurrentUserJson"
     },
 
     currentUser: {
@@ -50,8 +49,7 @@ qx.Class.define("zx.app.auth.UsersEditor", {
       nullable: true,
       check: "Object",
       event: "changeCurrentUser",
-      apply: "_applyCurrentUser",
-      async: true
+      apply: "_applyCurrentUser"
     }
   },
 
