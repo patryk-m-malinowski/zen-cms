@@ -20,12 +20,12 @@ qx.Class.define("zx.utils.Sha", {
 
   statics: {
     sha1(value) {
-      let str = require("sha.js")("sha1").update(value).digest("hex");
+      let str = require("sha.js").default("sha1").update(value).digest("hex");
       return str;
     },
 
     sha256(value) {
-      let str = require("sha.js")("sha256").update(value).digest("hex");
+      let str = require("sha.js").default("sha256").update(value).digest("hex");
       return str;
     }
   }
