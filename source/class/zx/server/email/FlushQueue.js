@@ -49,7 +49,9 @@ qx.Class.define("zx.server.email.FlushQueue", {
             return null;
           });
 
-        if (!email) continue;
+        if (!email) {
+          continue;
+        }
         worker.appendWorkLog(`Before sending email ${email.toUuid()}.`);
         email.clearLog();
         let listener = email.addListener("log", e => worker.appendWorkLog(e.getData().message));
