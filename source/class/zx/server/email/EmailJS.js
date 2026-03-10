@@ -59,7 +59,7 @@ qx.Class.define("zx.server.email.EmailJS", {
 
     _parseHeaders(headers) {
       const isEmailLike = addr => {
-        const match = zx.utils.Email.validate(addr);
+        const match = zx.utils.Values.isValidEmail(addr);
         if (!match) {
           qx.log.Logger.warn(`An address was found that does not look like an email address and will be ignored: '${addr}'`);
         }
