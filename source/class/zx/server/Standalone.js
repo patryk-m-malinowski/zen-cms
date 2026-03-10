@@ -31,6 +31,8 @@ const path = require("path");
  *
  * @asset(zx/thin/theme/materials/*)
  * @asset(zx/db/template/*)
+ *
+ * @ignore(process)
  */
 qx.Class.define("zx.server.Standalone", {
   extend: qx.core.Object,
