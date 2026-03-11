@@ -16,7 +16,6 @@
  * ************************************************************************ */
 
 const fs = require("fs");
-const path = require("path");
 
 qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
   extend: qx.core.Object,
