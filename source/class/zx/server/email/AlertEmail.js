@@ -1,19 +1,19 @@
 /* ************************************************************************
-*
-*  Zen [and the art of] CMS
-*
-*  https://zenesis.com
-*
-*  Copyright:
-*    2019-2025 Zenesis Ltd, https://www.zenesis.com
-*
-*  License:
-*    MIT (see LICENSE in project root)
-*
-*  Authors:
-*    John Spackman (john.spackman@zenesis.com, @johnspackman)
-*
-* ************************************************************************ */
+ *
+ *  Zen [and the art of] CMS
+ *
+ *  https://zenesis.com
+ *
+ *  Copyright:
+ *    2019-2025 Zenesis Ltd, https://www.zenesis.com
+ *
+ *  License:
+ *    MIT (see LICENSE in project root)
+ *
+ *  Authors:
+ *    John Spackman (john.spackman@zenesis.com, @johnspackman)
+ *
+ * ************************************************************************ */
 
 const os = require("os");
 
@@ -32,11 +32,11 @@ qx.Class.define("zx.server.email.AlertEmail", {
     const MINUTE = 60 * 1000;
     const INTERVAL_MS = this.constructor.INTERVAL_MINUTES * MINUTE;
     // const INTERVAL_MS = 2000;//for testing
-    this.__debounce = new zx.utils.Debounce(this.__sendEmail.bind(this), INTERVAL_MS).set({ repeatedTrigger: "ignore" });
+    this.__debounce = new qx.util.Debounce(this.__sendEmail.bind(this), INTERVAL_MS).set({ onPending: "ignore" });
   },
   members: {
     /**
-     * @type {zx.utils.Debounce}
+     * @type {qx.util.Debounce}
      */
     __debounce: null,
     /**
@@ -66,7 +66,7 @@ qx.Class.define("zx.server.email.AlertEmail", {
 
       this.__body += message;
 
-      this.__debounce.run();
+      this.__debounce.trigger();
     },
 
     /**

@@ -16,6 +16,9 @@
  * ************************************************************************ */
 
 /**
+ * @deprected Due to errors in the documentation, confusing behaviour and limitation,
+ * it is recommended to use qx.util.Debounce, which is more powerful and better organized.
+ *
  * Class for debouncing a call, with promise support
  */
 qx.Class.define("zx.utils.Debounce", {
