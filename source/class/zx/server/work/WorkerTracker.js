@@ -15,7 +15,6 @@
  *
  * ************************************************************************ */
 
-const Docker = require("dockerode");
 const fs = require("fs");
 const path = require("path");
 
@@ -503,6 +502,7 @@ qx.Class.define("zx.server.work.WorkerTracker", {
           "  nodeDebugPort: " + this.__nodeDebugPort + "\n" +
           "  Docker Container Config: " + JSON.stringify(dockerConfig, null, 2));
 
+      const Docker = require("dockerode");
       let docker = new Docker();
       let container = await docker.createContainer(dockerConfig);
       this._container = container;

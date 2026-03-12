@@ -19,8 +19,6 @@
  * @ignore(Buffer)
  */
 
-const puppeteer = require("puppeteer-core");
-
 /**
  * Wraps the puppeteer instance and adds API callbacks and low level integration
  */
@@ -148,6 +146,7 @@ qx.Class.define("zx.server.puppeteer.PuppeteerClient", {
      * methods and sending events
      */
     async start() {
+      const puppeteer = require("puppeteer-core");
       if (this._browser) {
         throw new Error("Cannot start more than once");
       }
