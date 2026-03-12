@@ -19,6 +19,10 @@
       "type": "string",
       "description": "The directory that the website files will exist in"
     },
+    "websiteName": {
+      "type": "string",
+      "description": "The public name of the website (e.g. www.example.com)"
+    },
     "database": {
       "type": "object",
       "additionalItems": false,
@@ -150,8 +154,26 @@
           "type": "string",
           "description": "Path to configuration file for the service account"
         }
+      }      
+    },
+    "statics": {
+      "type": "array",
+      "description": "Static file directories to serve",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [ "path" ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The directory to serve static files from"
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL to serve the static files on (default: same as path)"
+          }
+        }
       }
-      
     }
   }
 }
