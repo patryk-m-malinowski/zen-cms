@@ -302,7 +302,10 @@ qx.Class.define("zx.server.WebServer", {
       if (!sessionConfig.secret) {
         this.warn("Using default secret for signing sessions - please set session.secret in the configuration");
       }
-      if (sessionConfig.secret.length < 32) {
+      if (!sessionConfig.secret) {
+        this.warn("Using default secret for signing sessions - please set session.secret in the configuration");
+        sessionConfig.secret = null;
+      } else if (sessionConfig.secret.length < 32) {
         this.warn("session.secret in the configuration is too short, it should be at least 32 characters");
         sessionConfig.secret = null;
       }
