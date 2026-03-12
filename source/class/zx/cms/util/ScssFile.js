@@ -26,7 +26,7 @@ const path = require("upath");
 
 /* global loadSass */
 /**
- * @external(qx/tool/loadsass.js)
+ * @external(qx/tool/compiler/loadsass.js)
  * @ignore(loadSass)
  */
 
