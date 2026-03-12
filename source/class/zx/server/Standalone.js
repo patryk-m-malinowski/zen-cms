@@ -297,6 +297,9 @@ qx.Class.define("zx.server.Standalone", {
      */
     async _initSite() {
       let site = (this._site = await this.getObjectByUrl(zx.cms.website.Site, "configuration/site"));
+      if (!site) {
+        throw new Error("Cannot find site configuration object at url configuration/site");
+      }
       return site;
     },
 
