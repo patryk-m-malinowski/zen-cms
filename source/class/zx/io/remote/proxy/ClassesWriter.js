@@ -17,6 +17,9 @@
 
 const fs = require("fs");
 
+/**
+ * @use(zx.io.persistence.anno.Property)
+ */
 qx.Class.define("zx.io.remote.proxy.ClassesWriter", {
   extend: qx.core.Object,
   implement: [qx.tool.compiler.ISourceTransformer],
