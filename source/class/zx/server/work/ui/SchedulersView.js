@@ -4,13 +4,8 @@
 qx.Class.define("zx.server.work.ui.SchedulersView", {
   extend: qx.ui.core.Widget,
 
-  /**
-   *
-   * @param {zx.io.api.client.AbstractClientTransport} transport The transport used to communicate with the scheduler server.
-   */
-  construct(transport) {
+  construct() {
     super();
-    this.__transport = transport;
     this._setLayout(new qx.ui.layout.HBox(5));
     this._add(this.getQxObject("schedulersTree"), { flex: 0 });
     this._add(this.getQxObject("scroll"), { flex: 1 });
@@ -42,7 +37,7 @@ qx.Class.define("zx.server.work.ui.SchedulersView", {
 
   objects: {
     schedulersTree() {
-      return new zx.server.work.ui.SchedulersTree(this.__transport).set({ width: 300 });
+      return new zx.server.work.ui.SchedulersTree().set({ width: 300 });
     },
     scroll() {
       let scroll = new qx.ui.container.Scroll();
@@ -66,11 +61,5 @@ qx.Class.define("zx.server.work.ui.SchedulersView", {
     edWorkerTracker() {
       return new zx.server.work.ui.WorkerTrackerEditor();
     }
-  },
-  members: {
-    /**
-     * @type {zx.io.api.client.AbstractClientTransport}
-     */
-    __transport: null
   }
 });

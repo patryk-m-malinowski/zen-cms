@@ -33,6 +33,12 @@ const path = require("path");
  * @property {WorkStatus} workStatus the status of the work, as written to disk
  * @property {String} log the contents of the log file, as written to disk
  * @property {zx.server.work.IWorkerApi.WorkResponse} response
+ *
+ * @typedef WorkResultJsonMin A minified version of WorkResultJson. Does not contain the log because it can be very large.
+ * @property {zx.server.work.IWork.WorkJson} workJson the JSON for the work, as passed to `zx.server.work.Worker.run`
+ * @property {WorkStatus} workStatus the status of the work, as written to disk
+ * @property {String} logLength the length of the log output
+ * @property {zx.server.work.IWorkerApi.WorkResponse} response
  */
 qx.Class.define("zx.server.work.WorkResult", {
   extend: qx.core.Object,
@@ -50,10 +56,10 @@ qx.Class.define("zx.server.work.WorkResult", {
     async loadFromDir(workdir) {
       let result = new zx.server.work.WorkResult();
       result.__workdir = workdir;
-      result.__jsonWork = await zx.utils.Json.loadJsonAsync(path.join(workdir, "work.json"));
+      result.__workJson = await zx.utils.Json.loadJsonAsync(path.join(workdir, "work.json"));
       result.__workStatus = await zx.utils.Json.loadJsonAsync(path.join(workdir, "status.json"));
-      if (!result.__jsonWork || !result.__workStatus) {
-        qx.log.Logger.error("Error loading WorkResult from " + workdir + ": jsonWork=" + JSON.stringify(result.__jsonWork) + " workStatus=" + JSON.stringify(result.__workStatus));
+      if (!result.__workJson || !result.__workStatus) {
+        qx.log.Logger.error("Error loading WorkResult from " + workdir + ": jsonWork=" + JSON.stringify(result.__workJson) + " workStatus=" + JSON.stringify(result.__workStatus));
         return null;
       }
       return result;
@@ -65,7 +71,7 @@ qx.Class.define("zx.server.work.WorkResult", {
     async deserializeFromScheduler(workdir, jsonResult) {
       let result = new zx.server.work.WorkResult();
       result.__workdir = workdir;
-      result.__jsonWork = jsonResult.workJson;
+      result.__workJson = jsonResult.workJson;
       result.__workStatus = jsonResult.workStatus;
 
       await fs.promises.writeFile(path.join(workdir, "work.json"), JSON.stringify(jsonResult.workJson, null, 2));
@@ -82,7 +88,7 @@ qx.Class.define("zx.server.work.WorkResult", {
     __response: null,
 
     /** @type {zx.server.work.IWork.WorkJson?} the currently running work */
-    __jsonWork: null,
+    __workJson: null,
 
     /** @type {String} the path for storing anythign to do with the Work being run by the Worker (eg log files) */
     __workdir: null,
@@ -113,7 +119,7 @@ qx.Class.define("zx.server.work.WorkResult", {
      */
     async initialize(workdir, jsonWork) {
       this.__workdir = workdir;
-      this.__jsonWork = jsonWork;
+      this.__workJson = jsonWork;
       await fs.promises.mkdir(this.__workdir, { recursive: true });
       let logFilePath = path.join(this.__workdir, "log.txt");
       this.__logStream = fs.createWriteStream(logFilePath);
@@ -135,7 +141,7 @@ qx.Class.define("zx.server.work.WorkResult", {
      */
     serializeForScheduler() {
       return {
-        workJson: this.__jsonWork,
+        workJson: this.__workJson,
         workStatus: this.__workStatus,
         log: this.__logOutput ?? "",
         response: this.__response
@@ -164,10 +170,10 @@ qx.Class.define("zx.server.work.WorkResult", {
     /**
      * Returns the JSON for the work
      *
-     * @returns {*} the JSON for the work
+     * @returns {zx.server.work.IWork.WorkJson} the JSON for the work
      */
-    getJsonWork() {
-      return this.__jsonWork;
+    getWorkJson() {
+      return this.__workJson;
     },
 
     /**
@@ -211,7 +217,7 @@ qx.Class.define("zx.server.work.WorkResult", {
      * @Override
      */
     toString() {
-      return this.classname + " " + this.__jsonWork?.uuid + " " + this.__workdir;
+      return this.classname + " " + this.__workJson?.uuid + " " + this.__workdir;
     }
   }
 });

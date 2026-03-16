@@ -10,6 +10,7 @@ qx.Class.define("zx.server.work.ui.SchedulerMgr", {
   construct(transport) {
     super();
     this.__transport = transport;
+    zx.server.work.ui.SchedulerMgr.__transport = transport;
     this._setLayout(new qx.ui.layout.Grow());
     this._add(this.getQxObject("tabView"));
   },
@@ -34,10 +35,10 @@ qx.Class.define("zx.server.work.ui.SchedulerMgr", {
       return pg;
     },
     schedulersView() {
-      return new zx.server.work.ui.SchedulersView(this.__transport);
+      return new zx.server.work.ui.SchedulersView();
     },
     tasksView() {
-      return new zx.server.work.ui.TasksView(this.__transport);
+      return new zx.server.work.ui.TasksView();
     }
   },
   members: {
@@ -45,5 +46,23 @@ qx.Class.define("zx.server.work.ui.SchedulerMgr", {
      * @type {zx.io.api.client.AbstractClientTransport}
      */
     __transport: null
+  },
+  statics: {
+    /**
+     * @type {zx.io.api.client.AbstractClientTransport}
+     */
+    __transport: null,
+    /**
+     *
+     * @returns {zx.io.api.client.AbstractClientTransport}
+     */
+    getTransport() {
+      if (qx.core.Environment.get("qx.debug")) {
+        if (!zx.server.work.ui.SchedulerMgr.__transport) {
+          throw new Error("Transport not available yet. You need to instantiate the SchedulerMgr first.");
+        }
+      }
+      return zx.server.work.ui.SchedulerMgr.__transport;
+    }
   }
 });

@@ -1,11 +1,8 @@
 qx.Class.define("zx.server.work.ui.TasksView", {
   extend: qx.ui.core.Widget,
-  /**
-   *
-   * @param {*} transport
-   */
-  construct(transport) {
+  construct() {
     super();
+    let transport = zx.server.work.ui.SchedulerMgr.getTransport();
     this.__api = zx.io.api.ApiUtils.createClientApi(zx.server.work.scheduler.ITasksApi, transport, "/tasks");
 
     let refreshTimer = new zx.utils.Timeout(2000, () => this.__refreshResults()).set({ recurring: true });

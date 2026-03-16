@@ -25,6 +25,9 @@ qx.Class.define("zx.server.work.ui.model.ScheduledTask", {
       nullable: true,
       init: null
     },
+    /**
+     * @type {zx.server.work.IWork.WorkJson}
+     */
     workJson: {
       check: "Object",
       event: "changeWorkJson"

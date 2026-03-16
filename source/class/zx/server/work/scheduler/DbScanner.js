@@ -259,13 +259,23 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
       return nextDate.toJSDate();
     },
 
-    /** @override interface zx.server.work.scheduler.ITasksApi */
+    /**
+     * @override interface zx.server.work.scheduler.ITasksApi
+     *
+     * Gets the past work results for a given task UUID.
+     * @param {string} taskUuid UUID of `zx.server.work.scheduler.ScheduledTask
+     * @returns {Promise<zx.server.work.WorkResult.WorkResultJsonMin[]>} an array of past work results for the given task UUID
+     */
     async getPastWorkResults(taskUuid) {
       let out = await this.__queueScheduler.getPastWorkResults({ workUuid: this.constructor.toWorkJsonUuid(taskUuid) });
       return out;
     },
 
-    /** @override interface zx.server.work.scheduler.ITasksApi */
+    /**
+     * @override interface zx.server.work.scheduler.ITasksApi
+     * @param {string} taskUuid
+     * @returns {Promise<zx.server.work.WorkResult.WorkResultJsonMin|null>}
+     */
     async getRunningWorkResult(taskUuid) {
       let out = await this.__queueScheduler.getRunningWorkResult(this.constructor.toWorkJsonUuid(taskUuid));
       return out;

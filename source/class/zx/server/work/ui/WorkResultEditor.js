@@ -19,13 +19,6 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
     this.bind("value.userKilled", this.getQxObject("btnKill"), "enabled", {
       converter: value => !value
     });
-
-    this.__debounceUpdateConsoleOutput = new zx.utils.Debounce(() => {
-      let value = this.getValue();
-      if (value) {
-        this.getQxObject("edtConsoleOutput").setValue(value.getLogOutput());
-      }
-    }, 1000);
   },
 
   properties: {
@@ -67,6 +60,7 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
       comp._add(labelException);
       comp._add(this.getQxObject("edtExceptionStack"));
       this.bind("value.exceptionStack", this.getQxObject("edtExceptionStack"), "value");
+      this.bind("value.logOutput", this.getQxObject("edtConsoleOutput"), "value");
       this.bind(
         "value.exceptionStack",
         new zx.utils.Target(value => {
@@ -81,8 +75,20 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
     pageConsoleOutput() {
       let pg = new qx.ui.tabview.Page("Output");
       pg.setLayout(new qx.ui.layout.VBox());
+      pg.add(this.getQxObject("btnViewFullOutput"));
       pg._add(this.getQxObject("edtConsoleOutput"), { flex: 1 });
       return pg;
+    },
+
+    btnViewFullOutput() {
+      let btn = new qx.ui.form.Button("View Full Output");
+      btn.addListener("execute", () => {
+        let transport = zx.server.work.ui.SchedulerMgr.getTransport();
+        let workResult = this.getValue();
+        let link = `${transport.getServerUri()}/${workResult.getScheduler().getId()}/getWorkLogRest?workResult=${workResult.toUuid()}`;
+        window.open(link, "_blank");
+      });
+      return btn;
     },
 
     compRunningOnly() {
@@ -201,23 +207,20 @@ qx.Class.define("zx.server.work.ui.WorkResultEditor", {
       if (value) {
         let userData = zx.server.work.ui.UserData.getInstance();
         this.getQxObject("btnStarred").setValue(userData.getStarredWorkResults().includes(value.toUuid()));
-        value.addListener("changeLogOutput", this.__onLogOutputChange, this);
+        value.addListener("changeLogLength", this.__updateLogs, this);
+        this.__updateLogs();
       } else {
         this.getQxObject("btnStarred").setValue(false);
       }
+
       if (oldValue) {
-        oldValue.removeListener("changeLogOutput", this.__onLogOutputChange, this);
+        oldValue.removeListener("changeLogLength", this.__updateLogs);
       }
       this.__inApplyValue = false;
     },
 
-    /**
-     * Event handler for log output changes; trigger a debounced update of the console output.
-     *
-     * @param {qx.event.type.Data} evt
-     */
-    __onLogOutputChange(evt) {
-      this.__debounceUpdateConsoleOutput.run();
+    __updateLogs() {
+      this.getValue()?.updateLog();
     }
   }
 });

@@ -4,15 +4,14 @@
 qx.Class.define("zx.server.work.ui.model.Scheduler", {
   extend: qx.core.Object,
   /**
-   *
-   * @param {zx.io.api.client.AbstractClientTransport} transport
-   * @param {string} apiPath
+   * @private
+   * @param {string} id
    */
-  construct(transport, apiPath) {
+  construct(id) {
     super();
-
-    this.__api = zx.io.api.ApiUtils.createClientApi(zx.server.work.scheduler.ISchedulerApi, transport, apiPath);
-    this.__transport = transport;
+    let transport = zx.server.work.ui.SchedulerMgr.getTransport();
+    this.__api = zx.io.api.ApiUtils.createClientApi(zx.server.work.scheduler.ISchedulerApi, transport, id);
+    this.setId(id);
   },
   properties: {
     /**
@@ -23,6 +22,9 @@ qx.Class.define("zx.server.work.ui.model.Scheduler", {
       check: "String",
       init: "Queue Scheduler",
       event: "changeTitle"
+    },
+    id: {
+      check: "String"
     }
   },
   members: {
@@ -30,10 +32,7 @@ qx.Class.define("zx.server.work.ui.model.Scheduler", {
      * @type {zx.server.work.scheduler.ISchedulerApi}
      */
     __api: null,
-    /**
-     * @type {zx.io.api.client.AbstractClientTransport}
-     */
-    __transport: null,
+
     /**
      * @type {qx.data.Array<zx.server.work.ui.model.WorkerPool>}
      */
@@ -53,7 +52,7 @@ qx.Class.define("zx.server.work.ui.model.Scheduler", {
         let poolsJson = await this.__api.getPools();
         let children = [];
         for (let poolJson of poolsJson) {
-          let pool = new zx.server.work.ui.model.WorkerPool(this, this.__transport, poolJson);
+          let pool = new zx.server.work.ui.model.WorkerPool(this, poolJson);
           children.push(pool);
         }
         this.__children = new qx.data.Array(children);
@@ -85,7 +84,7 @@ qx.Class.define("zx.server.work.ui.model.Scheduler", {
       return [...queuedWork, ...runningWork].map(json =>
         new zx.server.work.ui.model.ScheduledWork(json.workJson.uuid).set({
           workClassname: json.workJson.workClassname,
-          running: json.running
+          running: json.running || false
         })
       );
     },
@@ -105,6 +104,25 @@ qx.Class.define("zx.server.work.ui.model.Scheduler", {
      */
     getApi() {
       return this.__api;
+    }
+  },
+
+  statics: {
+    /**
+     * @type {Object.<string, zx.server.work.ui.model.Scheduler>}
+     */
+    __schedulerById: {},
+
+    /**
+     * Gets a scheduler by ID, creating one if it does not exist
+     * @param {string} id
+     * @returns {zx.server.work.ui.model.Scheduler}
+     */
+    get(id) {
+      if (!this.__schedulerById[id]) {
+        this.__schedulerById[id] = new zx.server.work.ui.model.Scheduler(id);
+      }
+      return this.__schedulerById[id];
     }
   }
 });

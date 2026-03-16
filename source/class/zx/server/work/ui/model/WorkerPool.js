@@ -5,10 +5,9 @@ qx.Class.define("zx.server.work.ui.model.WorkerPool", {
   extend: qx.core.Object,
   /**
    * @param {zx.server.work.ui.model.Scheduler} scheduler
-   * @param {zx.io.api.client.AbstractClientTransport} transport
    * @param {zx.server.work.pools.IWorkerPoolApi.PoolInfo} poolJson
    */
-  construct(scheduler, transport, poolJson) {
+  construct(scheduler, poolJson) {
     super();
     this.__scheduler = scheduler;
     this.__trackersByUuid = {};
@@ -18,6 +17,7 @@ qx.Class.define("zx.server.work.ui.model.WorkerPool", {
     this.setTitle(poolJson.classname);
     this.setId(poolJson.classname);
 
+    let transport = zx.server.work.ui.SchedulerMgr.getTransport();
     this.__api = zx.io.api.ApiUtils.createClientApi(zx.server.work.pools.IWorkerPoolApi, transport, poolJson.apiPath);
 
     const REFRESH_INTERVAL = 2000; // 2 seconds

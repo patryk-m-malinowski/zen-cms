@@ -187,6 +187,7 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
 
     /**
      * @Override
+     * @param {zx.server.work.WorkResult.WorkResultJson} workResultData
      */
     async onWorkCompleted(workResultData) {
       this.debug(`Work completed for job ${workResultData.workJson.uuid}`);
@@ -245,7 +246,17 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
       return Object.values(this.__poolsByUuid);
     },
 
-    /**@override @interface zx.server.work.scheduler.ISchedulerApi */
+    /**
+     * @override interface zx.server.work.scheduler.ISchedulerApi
+     *
+     * @param {SearchData} search
+     *
+     * @typedef SearchData
+     * @property {string?} text - the search string to filter tasks by
+     * @property {{id: string?, uuid: string?}?} pool - the ID of the pool to filter tasks by, or `null` for all pools
+     * @property {string?} workUuid UUID of the work in the work JSON
+     * @returns {Promise<zx.server.work.WorkResult.WorkResultJsonMin[]>} A promise that resolves with an array of work results matching the search criteria
+     */
     async getPastWorkResults(search) {
       let match = {};
 
@@ -285,6 +296,12 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
           },
           {
             $limit: 100
+          },
+          {
+            $addFields: {
+              log: -1,
+              logLength: { $strLenCP: "$log" }
+            }
           }
         ])
         .toArray();
@@ -329,15 +346,17 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
     },
 
     /**
-     * Tries to see if a work with the given UUID is running in any of the pools,
-     * and if so, returns the work result for that work.
+     * @override zx.server.work.scheduler.ISchedulerApi
+     * Returns the running work result for the given work UUID,
+     * if there is one running.
      *
      * NOTE: ATM, this only works when the scheduler and and pool are running in the same process and thread!
      *
      * @param {string} workUuid
-     * @returns {Promise<zx.server.work.WorkResult.WorkResultJson|null>} the work result for the given work UUID if that work is running, or null if it is not
+     * @param {boolean} fullData If true, the full WorkResultJson is returned, otherwise WorkResultJsonMin is returned.
+     * @returns {Promise<zx.server.work.WorkResult.WorkResultJsonMin|zx.server.work.WorkResult.WorkResultJson|null>}
      */
-    async getRunningWorkResult(workUuid) {
+    async getRunningWorkResult(workUuid, fullData = false) {
       let running = this.__running[workUuid];
       if (!running) {
         return null;
@@ -348,10 +367,63 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
       let poolDescription = await api.getDescriptionJson();
       api.dispose();
       let tracker = poolDescription.runningWorkerTrackers.find(tracker => tracker.workResult.workJson.uuid === workUuid);
-      if (!tracker) {
+      if (!tracker?.workResult) {
         return null;
       }
-      return tracker.workResult ?? null;
+      return fullData ? tracker.workResult : this.__minifyWorkResult(tracker.workResult);
+    },
+
+    /**
+     *
+     * @param {zx.server.work.WorkResult.WorkResultJson} workResult
+     * @returns {zx.server.work.WorkResult.WorkResultJsonMin}
+     */
+    __minifyWorkResult(workResult) {
+      let out = qx.lang.Object.clone(workResult);
+      out.logLength = out.log.length;
+      delete out.log;
+      return out;
+    },
+
+    /**
+     * @override interface zx.server.work.scheduler.ISchedulerApi
+     *
+     * Gets the log of a work result.
+     * @param {string} workResultUuid
+     * @param {integer} start Start offset of the log
+     * @param {integer} end End offset of the log
+     * @returns {Promise<string?>} The log at the requested offsets. If the work result cannot be found, returns null.
+     */
+    async getWorkLog(workResultUuid, start, end) {
+      let [workUuid, startTime] = workResultUuid.split("/");
+      startTime = Number.parseInt(startTime);
+
+      let result;
+
+      //First try to see if it is running
+      result = await this.getRunningWorkResult(workUuid, true);
+      let started = result?.workStatus?.started?.getTime();
+      if (started && started == startTime) {
+        return result.log.substring(start, end);
+      }
+
+      //Then try and find it in the database of past results
+      result = await zx.server.Standalone.getInstance()
+        .getDb()
+        .getCollection("zx.server.work.scheduler.QueueScheduler.WorkResult")
+        .findOne(
+          {
+            "workJson.uuid": workUuid,
+            "workStatus.started": new Date(startTime)
+          },
+          { projection: { log: 1 } }
+        );
+
+      if (result) {
+        return result.log.substring(start, end);
+      } else {
+        return null;
+      }
     },
 
     /**
@@ -371,6 +443,19 @@ qx.Class.define("zx.server.work.scheduler.QueueScheduler", {
         workJson: entry.workJson,
         pool: entry.pool
       }));
+    },
+
+    /**
+     *
+     * @param {zx.io.api.server.Request} req
+     * @param {zx.io.api.server.Response} res
+     * @returns {string}
+     */
+    getWorkLogRest(req, res) {
+      let { workResult: workResultUuid } = req.getQuery();
+      return this.getWorkLog(workResultUuid);
     }
-  }
+  },
+
+  statics: {}
 });

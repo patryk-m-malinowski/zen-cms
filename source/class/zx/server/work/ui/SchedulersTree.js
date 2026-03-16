@@ -1,14 +1,11 @@
 qx.Class.define("zx.server.work.ui.SchedulersTree", {
   extend: qx.ui.core.Widget,
 
-  /**
-   * @param {zx.io.api.client.AbstractClientTransport} transport
-   */
-  construct(transport) {
+  construct() {
     super();
 
     let inspector = new zx.server.work.ui.NodeInspector();
-    let root = new zx.server.work.ui.model.ListOfSchedulers(transport);
+    let root = new zx.server.work.ui.model.ListOfSchedulers();
     this.__dataSource = new qxl.datagrid.source.tree.TreeDataSource(() => inspector, this.getQxObject("columns")).set({ root });
 
     this._setLayout(new qx.ui.layout.Grow());

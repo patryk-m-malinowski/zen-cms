@@ -6,7 +6,7 @@
 qx.Class.define("zx.server.work.ui.model.WorkResult", {
   extend: qx.core.Object,
   /**
-   * @private
+   * @private To get WorkResult objects, use `WorkResult.get`
    * @param {zx.server.work.WorkResult.WorkResultJson?} workResultJson
    */
   construct(workResultJson) {
@@ -15,6 +15,8 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
     if (workResultJson) {
       this.__update(workResultJson);
     }
+
+    this.__debounceUpdateLog = new qx.util.Debounce(() => this.__updateLogImpl(), 0).set({ onRunning: "queue" });
   },
   properties: {
     /**
@@ -48,7 +50,8 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
     },
     logOutput: {
       check: "String",
-      event: "changeLogOutput"
+      event: "changeLogOutput",
+      init: ""
     },
     started: {
       check: "Date",
@@ -89,6 +92,32 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
       check: "Boolean",
       event: "changeUserKilled",
       init: false
+    },
+
+    /**
+     * The scheduler that produced this work result
+     */
+    scheduler: {
+      check: "zx.server.work.ui.model.Scheduler",
+      init: null
+    },
+
+    /**
+     * The length of the log output that the server reports.
+     *
+     * When we call __update, we get the length of the log that the server has.
+     * If we call updateLog, and this.__logLength > this.__hasLogLength (i.e. we need to download some new log messages),
+     * we download the new log messages from the server,
+     * and then we update this.__hasLogLength.
+     * Note: To save memory and CPU, we don't store the full log (it's limited to 1000 characters).
+     * These values are just pointers so we can keep track of the log;
+     * they don't represent the full length of the log we have.
+     *
+     */
+    __logLength: {
+      check: "Integer",
+      init: -1,
+      event: "changeLogLength"
     }
   },
   statics: {
@@ -125,6 +154,26 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
     }
   },
   members: {
+    /**
+     * @type {qx.util.Debounce}
+     * Use a debounce so we update the logs again when we request to update the logs while this work result is fetching data from the server.
+     * This debounce has a timeout of 0, meaning it's not used to batch the calls.
+     */
+    __debounceUpdateLog: null,
+
+    /**
+     * The length of the log output that this object has in memory
+     */
+    __hasLogLength: 0,
+
+    /**
+     * Downloads new log data from the server
+     * and trims the log if it exceeds the limit.
+     */
+    updateLog() {
+      this.__debounceUpdateLog.trigger();
+    },
+
     _updateDerivedProps() {
       this.setSuccess(this.getCompleted() ? !this.getExceptionStack() : null);
     },
@@ -138,11 +187,28 @@ qx.Class.define("zx.server.work.ui.model.WorkResult", {
         description: workResultJson.workJson.description ?? null,
         workJson: workResultJson.workJson,
         workClassname: workResultJson.workJson.workClassname,
-        logOutput: workResultJson.log,
         started: workResultJson.workStatus?.started ?? null,
         completed: workResultJson.workStatus?.completed ?? null,
-        exceptionStack: workResultJson.response?.exceptionStack ?? workResultJson.response?.exception ?? null
+        exceptionStack: workResultJson.response?.exceptionStack ?? workResultJson.response?.exception ?? null,
+        scheduler: zx.server.work.ui.model.Scheduler.get(workResultJson.schedulerId ?? "scheduler") // for now, we assume that there is only one scheduler
       });
+
+      this.__logLength = workResultJson.logLength;
+    },
+
+    async __updateLogImpl() {
+      if (this.__logLength == this.__hasLogLength) return;
+
+      const MAX_LENGTH = 10000;
+      //ensure we only download just enough data that fits inside MAX_LENGTH
+      if (this.__logLength - this.__hasLogLength > MAX_LENGTH) {
+        this.__hasLogLength = this.__logLength - MAX_LENGTH;
+      }
+      let newData = await this.getScheduler().getApi().getWorkLog(this.toUuid(), this.__hasLogLength, this.__logLength);
+      if (!newData) return; //if it's null, this means that the task isn't running anymore
+      let newLog = this.getLogOutput() + newData;
+      this.setLogOutput(newLog.substring(newLog.length - MAX_LENGTH, newLog.length));
+      this.__hasLogLength = this.__logLength;
     },
 
     async kill() {

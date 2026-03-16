@@ -1,12 +1,9 @@
 qx.Class.define("zx.server.work.ui.model.ListOfSchedulers", {
   extend: qx.core.Object,
-  /**
-   *
-   * @param {zx.io.api.client.AbstractClientTransport} transport
-   */
-  construct(transport) {
+
+  construct() {
     super();
-    this.__children = new qx.data.Array([new zx.server.work.ui.model.Scheduler(transport, "/scheduler")]);
+    this.__children = new qx.data.Array([zx.server.work.ui.model.Scheduler.get("scheduler")]);
   },
   members: {
     /**

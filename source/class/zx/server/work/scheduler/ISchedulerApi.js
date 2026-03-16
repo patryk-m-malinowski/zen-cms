@@ -55,18 +55,6 @@ qx.Interface.define("zx.server.work.scheduler.ISchedulerApi", {
     async onWorkCompleted(workResult) {},
 
     /**
-     * @param {SearchData} search
-     *
-     * @typedef SearchData
-     * @property {string?} text - the search string to filter tasks by
-     * @property {{id: string?, uuid: string?}?} pool - the ID of the pool to filter tasks by, or `null` for all pools
-     * @property {string?} workUuid UUID of the work in the work JSON
-     * @returns {Promise<zx.server.work.WorkResult.WorkResultJson[]>} A promise that resolves with an array of work results matching the search criteria
-     
-     */
-    async getPastWorkResults(search) {},
-
-    /**
      * @returns {Promise<QueuedWorkJson[]>}
      */
     async getQueuedWork() {},
@@ -74,6 +62,26 @@ qx.Interface.define("zx.server.work.scheduler.ISchedulerApi", {
     /**
      * @returns {Promise<RunningWorkJson[]>}
      */
-    async getRunningWork() {}
+    async getRunningWork() {},
+
+    /**
+     * @see {zx.server.work.scheduler.QueueScheduler.getRunningWorkResult}
+     */
+    async getRunningWorkResult() {},
+
+    /**
+     * @see {zx.server.work.scheduler.QueueScheduler.getPastWorkResults}
+     */
+    async getPastWorkResults() {},
+
+    /**
+     * @see {zx.server.work.scheduler.QueueScheduler.getWorkLog}
+     */
+    async getWorkLog() {},
+
+    /**
+     * @see {zx.server.work.scheduler.QueueScheduler.getWorkLogRest}
+     */
+    async getWorkLogRest(req, res) {}
   }
 });
