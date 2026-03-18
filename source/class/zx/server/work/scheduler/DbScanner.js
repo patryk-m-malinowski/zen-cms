@@ -291,11 +291,11 @@ qx.Class.define("zx.server.work.scheduler.DbScanner", {
         let rgxText = { $regex: query.text, $options: "i" };
         match.$or = [
           { title: rgxText }, //br
+          { _uuid: rgxText },
           { wellKnownId: rgxText },
           { description: rgxText }
         ];
-      }
-      if (query.uuid) {
+      } else if (query.uuid) {
         match._uuid = query.uuid;
       }
 
