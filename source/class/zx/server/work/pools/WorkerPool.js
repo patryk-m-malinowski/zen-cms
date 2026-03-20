@@ -309,7 +309,7 @@ qx.Class.define("zx.server.work.pools.WorkerPool", {
         if (value[prop] !== undefined) {
           pool["set" + upname](value[prop]);
         } else {
-          pool["reset" + upname](value[prop]);
+          pool["reset" + upname]();
         }
       });
     },
