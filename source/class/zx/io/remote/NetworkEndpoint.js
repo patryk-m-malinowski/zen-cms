@@ -34,6 +34,10 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
     this.__uuid = uuid || this.toUuid();
     this.__receiveQueue = new zx.utils.Queue(packets => this._receivePacketsImpl(packets));
 
+    if (!qx.core.Environment.get("zx.io.remote.NetworkEndpoint.server")) {
+      this.__flushDebounce = new zx.utils.Debounce(() => this.flush(), 5);
+    }
+
     zx.io.remote.NetworkEndpoint.__allEndpoints[this.__uuid] = this;
     if (qx.core.Environment.get("zx.io.remote.NetworkEndpoint.server") === undefined) {
       throw new Error("You must set `zx.io.remote.NetworkEndpoint.server` as an environment variable in `compile.json` and recompile with `--clean`");
@@ -85,6 +89,9 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
 
     /** @type{Map} list of property changes that are queued for delivery */
     __propertyChangeStore: null,
+
+    /** @type{zx.utils.Debounce} debounce for flushing property changes (client-side only) */
+    __flushDebounce: null,
 
     /**
      * Whether the end point is open
@@ -351,6 +358,7 @@ qx.Class.define("zx.io.remote.NetworkEndpoint", {
         store = this.__propertyChangeStore[uuid] = {};
       }
       io.storeChange(store, propertyName, changeType, value);
+      this.__flushDebounce?.run();
     },
 
     /**
