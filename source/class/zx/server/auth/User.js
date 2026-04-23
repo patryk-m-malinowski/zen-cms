@@ -33,7 +33,7 @@ qx.Class.define("zx.server.auth.User", {
    */
   construct(virtualUser) {
     super();
-    this.__virtualUser = !!virtualUser;
+    this.setVirtual(!!virtualUser);
     this.initApiTokens(new zx.data.Map());
     this.set({
       permissions: new zx.data.IndexedArray().set({
@@ -117,35 +117,16 @@ qx.Class.define("zx.server.auth.User", {
       event: "changeApiTokens",
       nullable: false,
       "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED]
+    },
+    virtual: {
+      init: false,
+      check: "Boolean",
+      nullable: false,
+      "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED]
     }
   },
 
   members: {
-    /** @type{Boolean} whether this is a virtual user, ie not to be persisted */
-    __virtualUser: false,
-
-    /**
-     * @Override
-     */
-    async save() {
-      if (this.__virtualUser) {
-        this.error("Refusing to save a virtual user " + this);
-      } else {
-        await super.save();
-      }
-    },
-
-    /**
-     * @Override
-     */
-    async deleteFromDatabase() {
-      if (this.__virtualUser) {
-        this.error("Refusing to delete a virtual user " + this);
-      } else {
-        await super.deleteFromDatabase();
-      }
-    },
-
     /**
      * Logs the user into the current session
      *
