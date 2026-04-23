@@ -118,6 +118,10 @@ qx.Class.define("zx.server.auth.User", {
       nullable: false,
       "@": [zx.io.persistence.anno.Property.DEFAULT, zx.io.remote.anno.Property.PROTECTED]
     },
+
+    /**
+     * Whether this user is virtual, ie created from remote auth
+     */
     virtual: {
       init: false,
       check: "Boolean",
